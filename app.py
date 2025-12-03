@@ -140,34 +140,58 @@ if uploaded_file is not None:
                     result = results[model_name]
 
                     if isinstance(result, AnalysisResult):
-                        # --- Dashboard View ---
+                        # --- Enhanced Dashboard View ---
                         st.subheader(f"Dashboard for {model_name}")
-                        col1, col2 = st.columns(2)
-
+                        
+                        # --- Top Level Metrics ---
+                        st.markdown("##### 🚩 Key Flags")
+                        col1, col2, col3 = st.columns(3)
                         with col1:
-                            st.markdown("##### 🚩 Underwriting Flags")
                             if "high" in result.injury_risk.lower():
                                 st.error(f"**Injury Risk:** {result.injury_risk}")
                             elif "medium" in result.injury_risk.lower():
                                 st.warning(f"**Injury Risk:** {result.injury_risk}")
                             else:
                                 st.info(f"**Injury Risk:** {result.injury_risk}")
-                            st.warning(f"**Liability:** {result.liability_indicator}")
-
                         with col2:
-                            st.markdown("##### 📋 Claims Facts")
-                            st.markdown(f"**Recommended Action:** {result.recommended_action}")
+                            st.warning(f"**Liability:** {result.liability_indicator}")
+                        with col3:
+                            st.info(f"**Collision Type:** {result.collision_type}")
 
-                        st.markdown("##### Summary")
-                        st.markdown(result.accident_summary)
+                        st.markdown("---")
+                        
+                        # --- Detailed Sections ---
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            st.markdown("##### 🌎 Environmental Conditions")
+                            st.markdown(f"**- Time of Day:** {result.environmental_conditions.time_of_day}")
+                            st.markdown(f"**- Weather:** {result.environmental_conditions.weather}")
+                            st.markdown(f"**- Road Conditions:** {result.environmental_conditions.road_conditions}")
+                            st.markdown(f"**- Location Type:** {result.environmental_conditions.location_type}")
 
-                        st.markdown("##### Vehicles Involved")
+                        with c2:
+                            st.markdown("##### 👨‍👩‍👧 Human Factors")
+                            st.markdown(f"**- Occupants Visible:** {result.human_factors.occupants_visible}")
+                            st.markdown(f"**- Pedestrians Involved:** {result.human_factors.pedestrians_involved}")
+                            st.markdown(f"**- Driver Behavior:** {', '.join(result.human_factors.driver_behavior_flags)}")
+                            st.markdown(f"**- Potential Witnesses:** {result.human_factors.potential_witnesses}")
+
+                        st.markdown("---")
+                        
+                        st.markdown("##### 📋 Summary & Actions")
+                        st.markdown(f"**Summary:** {result.accident_summary}")
+                        st.markdown(f"**Recommended Action:** {result.recommended_action}")
+
+                        st.markdown("##### 🚗 Vehicles Involved")
                         for vehicle in result.vehicles_involved:
-                            st.markdown(f"- **{vehicle['vehicle_id']} ({vehicle['description']}):** {vehicle['damage']}")
+                            st.markdown(f"- **Vehicle {vehicle.vehicle_id} ({vehicle.description}):** {vehicle.damage}")
 
                         # --- Raw Data/Reasoning ---
                         with st.expander("Show System Reasoning & Raw Data"):
-                            st.code("\n".join(result.reasoning_trace), language=None)
+                            st.markdown("###### Reasoning Trace")
+                            for step in result.reasoning_trace:
+                                st.markdown(f"- {step}")
+                            st.markdown("###### Raw JSON Output")
                             st.json(result.model_dump_json(indent=4))
                     else:
                         # Display error or info message

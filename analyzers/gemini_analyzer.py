@@ -55,7 +55,9 @@ class GeminiProAnalyzer(AccidentAnalyzer):
             )
             raw_response_text = self._clean_response(response.text)
             analysis_data = json.loads(raw_response_text)
-            return AnalysisResult(**analysis_data)
+            result = AnalysisResult(**analysis_data)
+            st.info(f"Completed analysis with {self.model_name}.")
+            return result
         except (ValidationError, json.JSONDecodeError) as e:
             st.error(f"Data Validation Error from {self.model_name}. See details below.")
             st.subheader("Raw Model Output:")
@@ -88,12 +90,14 @@ class GeminiProAnalyzer(AccidentAnalyzer):
     def _build_prompt(self) -> str:
         """Builds the detailed prompt for the Gemini model."""
         return f"""
-        You are an expert AI assistant for an insurance company, specializing in vehicle accident analysis.
+        You are an expert AI assistant for an insurance company, specializing in vehicle accident analysis from video footage.
         Your task is to analyze the provided video and return a structured JSON object with your findings.
-        The JSON object must strictly adhere to the following schema:
+        The JSON object must strictly adhere to the following detailed schema.
+
+        **IMPORTANT**: For any field where the information is not available or cannot be determined from the video, you **must** use a specific string like 'Unknown', 'Not Visible', or 'N/A'. **Do not omit any fields.**
 
         {{
-          "accident_summary": "A concise, objective summary of the accident.",
+          "accident_summary": "A concise, objective summary of the sequence of events in the accident.",
           "vehicles_involved": [
             {{
               "vehicle_id": "A",
@@ -101,14 +105,25 @@ class GeminiProAnalyzer(AccidentAnalyzer):
               "damage": "e.g., 'Severe front-end damage', 'Minor rear bumper scratches'"
             }}
           ],
-          "liability_indicator": "A clear statement on who is likely at fault and why.",
-          "injury_risk": "An assessment of the potential for occupant injury (e.g., 'Low', 'Medium', 'High') with a brief justification.",
-          "recommended_action": "Next steps for the claims adjuster (e.g., 'Initiate claim against Vehicle A', 'Request police report').",
+          "liability_indicator": "A clear statement on who is likely at fault and why. If unclear, state 'Undetermined'.",
+          "environmental_conditions": {{
+            "time_of_day": "Choose one: 'Daylight', 'Dusk', 'Night', 'Dawn', 'Unknown'",
+            "weather": "e.g., 'Clear', 'Rainy', 'Snowing', 'Foggy', or 'Not Visible'",
+            "road_conditions": "e.g., 'Dry', 'Wet', 'Icy', or 'Not Visible'",
+            "location_type": "e.g., 'Highway', 'Residential Street', 'Intersection', or 'Unknown'"
+          }},
+          "human_factors": {{
+            "occupants_visible": "e.g., 'Driver only', 'Driver and passenger', or 'Not Visible'",
+            "pedestrians_involved": "A string: 'Yes', 'No', or 'Unknown'",
+            "driver_behavior_flags": ["List of observed behaviors. If none, return an empty list []"],
+            "potential_witnesses": "Description of potential witnesses. If none, state 'None visible'."
+          }},
+          "collision_type": "Standard insurance term, e.g., 'Rear-End', 'T-Bone', or 'Unknown'",
+          "traffic_controls_present": ["List of traffic controls observed. If none, return an empty list []"],
+          "injury_risk": "An assessment of the potential for occupant injury (e.g., 'Low', 'Medium', 'High', 'Unknown').",
+          "recommended_action": "Next steps for the claims adjuster. If no specific action, state 'Standard procedure'.",
           "reasoning_trace": [
-            "A step-by-step log of key frames or events that led to your conclusions.",
-            "e.g., '00:01: Vehicle A is following Vehicle B at a safe distance...'"
+            "A step-by-step log of key frames or events. If the video is unclear, provide a trace explaining why."
           ]
         }}
-
-        Analyze the video carefully and provide a comprehensive, accurate, and objective report. Do not add any commentary outside of the JSON object.
         """
