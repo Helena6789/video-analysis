@@ -1,14 +1,26 @@
+# analyzers/mock_analyzer.py
 import asyncio
+import time
 from core.analyzers import AccidentAnalyzer
 from core.schemas import AnalysisResult, EnvironmentalConditions, HumanFactors, VehicleDetails
 
 class MockVLMAnalyzer(AccidentAnalyzer):
-    async def analyze_video(self, video_path: str) -> AnalysisResult:
+    async def analyze_video(self, video_path: str) -> tuple[AnalysisResult, dict]:
         # Simulate a non-blocking network call
+        start_time = time.monotonic()
         await asyncio.sleep(2)
+        end_time = time.monotonic()
+
+        # Create a dummy performance dictionary
+        performance = {
+            "latency": end_time - start_time,
+            "estimated_cost": 0.0,
+            "input_tokens": 0,
+            "output_tokens": 0
+        }
 
         # Return a hardcoded, realistic result conforming to the new schema
-        return AnalysisResult(
+        result = AnalysisResult(
             accident_summary="A rear-end collision occurred at a signalized intersection. Vehicle A (Blue Sedan) failed to stop and collided with the rear of Vehicle B (White SUV), which was stationary at a red light.",
             vehicles_involved=[
                 VehicleDetails(vehicle_id="A", description="Blue Sedan", damage="Severe front-end damage"),
@@ -37,3 +49,4 @@ class MockVLMAnalyzer(AccidentAnalyzer):
                 "Frame 55: Impact occurs. No brake lights visible on Vehicle A prior to impact."
             ]
         )
+        return result, performance

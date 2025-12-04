@@ -6,17 +6,22 @@ import asyncio
 from dotenv import load_dotenv
 import google.generativeai as genai
 from pydantic import ValidationError
+from moviepy import VideoFileClip
+import tiktoken
+
 from core.analyzers import AccidentAnalyzer
 from core.schemas import AnalysisResult
-import streamlit as st
+from core.pricing import calculate_cost, TOTAL_INPUT_TOKENS_PER_SECOND
 
 # Load environment variables from .env file
 load_dotenv()
 
+# Initialize tokenizer for output estimation
+tokenizer = tiktoken.get_encoding("cl100k_base")
+
 class GeminiProAnalyzer(AccidentAnalyzer):
     """
-    An async analyzer that uses a Gemini model.
-    It separates file management from the core analysis logic.
+    An async analyzer that uses a Gemini model and calculates performance metrics.
     """
     def __init__(self, model_name: str = 'gemini-2.5-pro'):
         self.api_key = os.getenv("GEMINI_API_KEY")
@@ -26,44 +31,75 @@ class GeminiProAnalyzer(AccidentAnalyzer):
         self.model_name = model_name
         self.model = genai.GenerativeModel(self.model_name)
 
-    async def analyze_video(self, video_path: str) -> AnalysisResult:
+    async def analyze_video(self, video_path: str) -> tuple[AnalysisResult, dict]:
         """
-        Handles the full async lifecycle (upload, analyze, delete) for a single video analysis.
+        Handles the full async lifecycle for a single video analysis.
         """
         video_file = await self.upload_video(video_path)
         try:
-            return await self.perform_analysis_on_file(video_file)
+            return await self.perform_analysis_on_file(video_file, video_path)
         finally:
             await self.delete_video(video_file)
 
-    async def perform_analysis_on_file(self, video_file) -> AnalysisResult:
+    async def perform_analysis_on_file(self, video_file, video_path: str) -> tuple[AnalysisResult, dict]:
         """
-        Performs analysis on a pre-uploaded video file object.
+        Performs analysis on a pre-uploaded video file object and calculates metrics.
         """
         prompt = self._build_prompt()
 
         try:
+            start_time = time.monotonic()
+
             # Run the blocking API call in a separate thread
             response = await asyncio.to_thread(
                 self.model.generate_content,
                 [prompt, video_file],
                 request_options={"timeout": 1000}
             )
+
+            end_time = time.monotonic()
+
             raw_response_text = self._clean_response(response.text)
+
+            # --- Performance Calculation ---
+            # 1. Latency
+            latency = end_time - start_time
+
+            # 2. Input Tokens & Cost
+            video_duration = await asyncio.to_thread(lambda: VideoFileClip(video_path).duration)
+            video_tokens = int(video_duration * TOTAL_INPUT_TOKENS_PER_SECOND)
+            prompt_tokens = len(tokenizer.encode(prompt))
+            input_tokens = video_tokens + prompt_tokens
+            
+            # 3. Output Tokens & Cost
+            output_tokens = len(tokenizer.encode(raw_response_text))
+            
+            # 4. Total Cost
+            total_cost = calculate_cost(self.model_name, input_tokens, output_tokens)
+            
+            performance = {
+                "latency": latency,
+                "estimated_cost": total_cost,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens
+            }
+
+            # --- Result Validation ---
             analysis_data = json.loads(raw_response_text)
             result = AnalysisResult(**analysis_data)
-            return result
+
+            return result, performance
+
         except (ValidationError, json.JSONDecodeError) as e:
             raise ValueError(f"Model output validation failed for {self.model_name}: {e}. Raw output: {raw_response_text}") from e
 
     @staticmethod
     async def upload_video(video_path: str):
         """Static async method to upload a video and return the file object."""
-
         def upload_sync():
             video_file = genai.upload_file(path=video_path)
             while video_file.state.name == "PROCESSING":
-                time.sleep(2) # This is blocking, but it's inside a thread
+                time.sleep(2)
                 video_file = genai.get_file(video_file.name)
             return video_file
 

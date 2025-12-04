@@ -74,7 +74,7 @@ async def run_analysis_async(selected_models: list, video_path: str):
                 for model_name in gemini_models:
                     log_message(f"Queuing analysis for {model_name}...")
                     analyzer = get_analyzer(model_name)
-                    coro = analyzer.perform_analysis_on_file(uploaded_video_file)
+                    coro = analyzer.perform_analysis_on_file(uploaded_video_file, video_path)
                     tasks.append(run_and_tag(model_name, coro))
 
             for model_name in other_models:
@@ -89,13 +89,14 @@ async def run_analysis_async(selected_models: list, video_path: str):
             # --- Run and Process Tasks as they Complete ---
             log_message(f"Running {len(tasks)} analysis tasks in parallel...")
             for future in asyncio.as_completed(tasks):
-                model_name, result, error = await future
+                model_name, result_tuple, error = await future
                 if error:
                     st.error(f"An error occurred with {model_name}: {error}")
-                    results[model_name] = f"An error occurred: {error}"
+                    # Ensure we always return a tuple of two, even on error
+                    results[model_name] = (None, f"An error occurred: {error}")
                 else:
                     log_success(f"Completed analysis with {model_name}.")
-                    results[model_name] = result
+                    results[model_name] = result_tuple
 
         finally:
             if uploaded_video_file:
@@ -162,9 +163,18 @@ if uploaded_file is not None:
                     continue
 
                 with display_tabs[i]:
-                    result = results[model_name]
+                    result, performance = results[model_name]
 
                     if isinstance(result, AnalysisResult):
+                        # --- Performance Metrics ---
+                        st.markdown("##### ⏱️ Performance")
+                        p_col1, p_col2, p_col3, p_col4 = st.columns(4)
+                        p_col1.metric("Latency (s)", f"{performance['latency']:.2f}")
+                        p_col2.metric("Est. Cost ($)", f"{performance['estimated_cost']:.4f}")
+                        p_col3.metric("Input Tokens", f"{performance['input_tokens']:,}")
+                        p_col4.metric("Output Tokens", f"{performance['output_tokens']:,}")
+                        st.markdown("---")
+
                         # --- Enhanced Dashboard View ---
                         st.subheader(f"Dashboard for {model_name}")
 

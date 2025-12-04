@@ -2,3 +2,5 @@ streamlit
 pydantic
 google-generativeai
 python-dotenv
+moviepy
+tiktoken
