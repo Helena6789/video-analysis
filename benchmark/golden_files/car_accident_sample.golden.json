@@ -1,0 +1,27 @@
+{
+    "categorical_fields": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Highway",
+        "pedestrians_involved": "No",
+        "collision_type": "Rear-End"
+    },
+    "descriptive_fields": {
+        "accident_summary": "A black sedan, traveling at a high rate of speed, rear-ends a slow-moving vehicle towing red agricultural equipment. The impact causes the sedan to launch into the air, flip, and roll violently multiple times, scattering a large amount of debris across the highway before coming to a rest.",
+        "liability_indicator": "The driver of Vehicle A (black sedan) is likely at fault. The collision was a direct rear-end impact with a slow-moving vehicle, indicating the driver of Vehicle A failed to maintain control, was driving too fast for the conditions, or was inattentive to the road ahead."
+    },
+    "list_fields": {
+        "driver_behavior_flags": [
+            "Inattentive Driving",
+            "High Speed Differential"
+        ],
+        "reasoning_trace": [
+            "00:00 - Video begins with the recording vehicle following Black SUV (Vehicle C) on a multi-lane highway.",
+            "00:02 - Another black sedan (Vehicle A) is observed rapidly closing the distance to Vehicle B (towing equipment) ahead in the same lane.",
+            "00:03 - Vehicle A impacts the rear of the towed equipment of Vehicle B without any visible braking or evasive action.",
+            "00:03 - 00:05 - The collision's force causes Vehicle A to become airborne, flip end over end, and roll multiple times, disintegrating as it travels down the road.",
+            "00:06 - The wreckage of Vehicle A and scattered debris are visible across the highway as the recording vehicle slows."
+        ]
+    }
+}

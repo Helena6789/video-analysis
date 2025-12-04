@@ -8,3 +8,6 @@ __pycache__/
 videos/*.*
 
 venv
+
+*.pdf
+benchmark/videos/*.*

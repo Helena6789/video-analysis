@@ -1,12 +1,14 @@
 import streamlit as st
 import os
 import asyncio
+import json
 from datetime import datetime
 from dotenv import load_dotenv
 from analyzers.mock_analyzer import MockVLMAnalyzer
 from analyzers.gemini_analyzer import GeminiProAnalyzer
 from core.analyzers import AccidentAnalyzer
 from core.schemas import AnalysisResult
+from core.evaluation import evaluate_accuracy
 
 # Load environment variables
 load_dotenv()
@@ -139,7 +141,21 @@ if uploaded_file is not None:
     with open(video_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
 
-    # Use an expander for a cleaner, on-demand video player
+    # --- Automatic Ground Truth Loading ---
+    golden_data = None
+    base_filename, _ = os.path.splitext(uploaded_file.name)
+    golden_filename = f"{base_filename}.golden.json"
+    golden_filepath = os.path.join("benchmark", "golden_files", golden_filename)
+
+    if os.path.exists(golden_filepath):
+        try:
+            with open(golden_filepath, "r") as f:
+                golden_data = json.load(f)
+            st.success(f"Found and loaded ground truth file: **{golden_filename}**")
+        except Exception as e:
+            st.warning(f"Found ground truth file, but failed to load it: {e}. Accuracy will not be evaluated.")
+            golden_data = None
+
     with st.expander("🎬 Preview Video", expanded=False):
         _, video_col, _ = st.columns([0.4, 0.2, 0.4])
         with video_col:
@@ -166,13 +182,77 @@ if uploaded_file is not None:
                     result, performance = results[model_name]
 
                     if isinstance(result, AnalysisResult):
+                        # --- Accuracy Scorecard (if golden file is provided) ---
+                        if golden_data:
+                            st.markdown("##### 🎯 Accuracy Scorecard")
+                            scorecard = evaluate_accuracy(result, golden_data)
+
+                            # Main metrics
+                            sc_col1, sc_col2, sc_col3 = st.columns(3)
+                            sc_col1.metric(
+                                "Categorical F1-Score",
+                                f"{scorecard['categorical_f1']:.2f}",
+                                help="Measures the accuracy of structured fields like weather, time of day, etc. (F1-Score)"
+                            )
+                            sc_col2.metric(
+                                "Summary Quality (BLEU)",
+                                f"{scorecard['summary_bleu']:.2f}",
+                                help="Measures how much the model's summary overlaps with the ground truth summary. (BLEU Score)"
+                            )
+                            sc_col3.metric(
+                                "Liability Match (METEOR)",
+                                f"{scorecard['liability_meteor']:.2f}",
+                                help="Measures the semantic similarity of the model's liability assessment to the ground truth. (METEOR Score)"
+                            )
+
+                            # List metrics in a more compact form
+                            st.markdown("###### List Field Accuracy")
+                            list_col1, list_col2, list_col3, list_col4 = st.columns(4)
+                            list_col1.metric(
+                                "Trace Precision",
+                                f"{scorecard['trace_precision']:.2f}",
+                                help="Of the reasoning steps the model provided, what percentage were semantically similar to the ground truth?"
+                            )
+                            list_col2.metric(
+                                "Trace Recall",
+                                f"{scorecard['trace_recall']:.2f}",
+                                help="Of the essential reasoning steps in the ground truth, what percentage did the model capture?"
+                            )
+                            list_col3.metric(
+                                "Behavior Precision",
+                                f"{scorecard['behavior_precision']:.2f}",
+                                help="Of the driver behaviors the model flagged, what percentage were relevant?"
+                            )
+                            list_col4.metric(
+                                "Behavior Recall",
+                                f"{scorecard['behavior_recall']:.2f}",
+                                help="Of the essential driver behaviors in the ground truth, what percentage did the model find?"
+                            )
+                            st.markdown("---")
+
                         # --- Performance Metrics ---
                         st.markdown("##### ⏱️ Performance")
                         p_col1, p_col2, p_col3, p_col4 = st.columns(4)
-                        p_col1.metric("Latency (s)", f"{performance['latency']:.2f}")
-                        p_col2.metric("Est. Cost ($)", f"{performance['estimated_cost']:.4f}")
-                        p_col3.metric("Input Tokens", f"{performance['input_tokens']:,}")
-                        p_col4.metric("Output Tokens", f"{performance['output_tokens']:,}")
+                        p_col1.metric(
+                            "Latency (s)",
+                            f"{performance['latency']:.2f}",
+                            help="Total time taken for the model to complete the analysis."
+                        )
+                        p_col2.metric(
+                            "Est. Cost ($)",
+                            f"{performance['estimated_cost']:.4f}",
+                            help="Estimated cost based on video duration and input/output tokens."
+                        )
+                        p_col3.metric(
+                            "Input Tokens",
+                            f"{performance['input_tokens']:,}",
+                            help="Tokens generated from the video (295 tokens/sec) + text prompt."
+                        )
+                        p_col4.metric(
+                            "Output Tokens",
+                            f"{performance['output_tokens']:,}",
+                            help="Tokens in the generated JSON response."
+                        )
                         st.markdown("---")
 
                         # --- Enhanced Dashboard View ---
@@ -232,3 +312,4 @@ if uploaded_file is not None:
                         # Display error or info message
                         st.error(f"Could not generate a report for {model_name}.")
                         st.code(str(result), language=None)
+                        st.code(str(performance), language=None)
