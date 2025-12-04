@@ -1,9 +1,10 @@
-
 import streamlit as st
 import os
+import asyncio
+from datetime import datetime
 from dotenv import load_dotenv
 from analyzers.mock_analyzer import MockVLMAnalyzer
-from analyzers.gemini_analyzer import GeminiProAnalyzer  # Import the new analyzer
+from analyzers.gemini_analyzer import GeminiProAnalyzer
 from core.analyzers import AccidentAnalyzer
 from core.schemas import AnalysisResult
 
@@ -37,6 +38,73 @@ def get_analyzer(model_name: str) -> AccidentAnalyzer:
 
     raise ValueError("Invalid analyzer selected")
 
+async def run_analysis_async(selected_models: list, video_path: str):
+    """Runs the analysis for all selected models concurrently and processes them as they complete."""
+    results = {}
+    gemini_models = {m for m in selected_models if m.startswith("Gemini")}
+    other_models = {m for m in selected_models if not m.startswith("Gemini")}
+
+    uploaded_video_file = None
+
+    def log_message(message):
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        status.write(f"`[{timestamp}]` {message}")
+
+    def log_success(message):
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        status.markdown(f"`[{timestamp}]` <span style='color:green;'>{message}</span>", unsafe_allow_html=True)
+
+    async def run_and_tag(model_name, coro):
+        """Wrapper to run a coroutine and tag its result with the model name."""
+        try:
+            result = await coro
+            return model_name, result, None
+        except Exception as e:
+            return model_name, None, e
+
+    with st.status("Running analysis...", expanded=True) as status:
+        try:
+            tasks = []
+
+            # --- Prepare Tasks ---
+            if gemini_models:
+                log_message("Uploading video to Gemini... (This may take a moment)")
+                uploaded_video_file = await GeminiProAnalyzer.upload_video(video_path)
+
+                for model_name in gemini_models:
+                    log_message(f"Queuing analysis for {model_name}...")
+                    analyzer = get_analyzer(model_name)
+                    coro = analyzer.perform_analysis_on_file(uploaded_video_file)
+                    tasks.append(run_and_tag(model_name, coro))
+
+            for model_name in other_models:
+                if ANALYZER_CATALOG[model_name][0] is None:
+                    results[model_name] = "Model not implemented."
+                    continue
+                log_message(f"Queuing analysis for {model_name}...")
+                analyzer = get_analyzer(model_name)
+                coro = analyzer.analyze_video(video_path)
+                tasks.append(run_and_tag(model_name, coro))
+
+            # --- Run and Process Tasks as they Complete ---
+            log_message(f"Running {len(tasks)} analysis tasks in parallel...")
+            for future in asyncio.as_completed(tasks):
+                model_name, result, error = await future
+                if error:
+                    st.error(f"An error occurred with {model_name}: {error}")
+                    results[model_name] = f"An error occurred: {error}"
+                else:
+                    log_success(f"Completed analysis with {model_name}.")
+                    results[model_name] = result
+
+        finally:
+            if uploaded_video_file:
+                log_message("Cleaning up uploaded resources...")
+                await GeminiProAnalyzer.delete_video(uploaded_video_file)
+
+        status.update(label="Analysis complete!", state="complete", expanded=False)
+    return results
+
 # --- UI Layout ---
 st.title("🚗 VLM Accident Analysis Prototype")
 st.markdown("Upload a video to analyze potential insurance liabilities and risks.")
@@ -53,9 +121,7 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.info(
-        "Select one or more models to compare their analysis."
-    )
+    st.info("Select one or more models to compare their analysis.")
     if any(model.startswith("Gemini") for model in selected_models) and not os.getenv("GEMINI_API_KEY"):
         st.warning("Please provide your Gemini API key in a `.env` file to use Gemini models.")
 
@@ -83,48 +149,7 @@ if uploaded_file is not None:
         if not selected_models:
             st.warning("Please select at least one model from the sidebar to begin analysis.")
         else:
-            results = {}
-            gemini_models = [m for m in selected_models if m.startswith("Gemini")]
-            other_models = [m for m in selected_models if not m.startswith("Gemini")]
-
-            uploaded_video_file = None
-
-            with st.status("Running analysis...", expanded=True) as status:
-                try:
-                    # --- Gemini Analysis (with single upload) ---
-                    if gemini_models:
-                        st.write("Uploading video to Gemini... (This may take a moment)")
-                        uploaded_video_file = GeminiProAnalyzer.upload_video(video_path)
-
-                        for model_name in gemini_models:
-                            try:
-                                st.write(f"Analyzing with {model_name}...")
-                                analyzer = get_analyzer(model_name)
-                                results[model_name] = analyzer.perform_analysis_on_file(uploaded_video_file)
-                            except Exception as e:
-                                st.error(f"An error occurred with {model_name}: {e}")
-                                results[model_name] = f"An error occurred: {e}"
-
-                    # --- Other Models Analysis ---
-                    for model_name in other_models:
-                        if ANALYZER_CATALOG[model_name][0] is None:
-                            results[model_name] = "Model not implemented."
-                            continue
-                        try:
-                            st.write(f"Analyzing with {model_name}...")
-                            analyzer = get_analyzer(model_name)
-                            results[model_name] = analyzer.analyze_video(video_path)
-                        except Exception as e:
-                            st.error(f"An error occurred with {model_name}: {e}")
-                            results[model_name] = f"An error occurred: {e}"
-
-                finally:
-                    # --- Cleanup ---
-                    if uploaded_video_file:
-                        st.write("Cleaning up uploaded resources...")
-                        GeminiProAnalyzer.delete_video(uploaded_video_file)
-
-                status.update(label="Analysis complete!", state="complete", expanded=False)
+            results = asyncio.run(run_analysis_async(selected_models, video_path))
 
             # --- Results Display ---
             st.header("Analysis Comparison")
@@ -142,7 +167,7 @@ if uploaded_file is not None:
                     if isinstance(result, AnalysisResult):
                         # --- Enhanced Dashboard View ---
                         st.subheader(f"Dashboard for {model_name}")
-                        
+
                         # --- Top Level Metrics ---
                         st.markdown("##### 🚩 Key Flags")
                         col1, col2, col3 = st.columns(3)
@@ -159,7 +184,7 @@ if uploaded_file is not None:
                             st.info(f"**Collision Type:** {result.collision_type}")
 
                         st.markdown("---")
-                        
+
                         # --- Detailed Sections ---
                         c1, c2 = st.columns(2)
                         with c1:
@@ -177,7 +202,7 @@ if uploaded_file is not None:
                             st.markdown(f"**- Potential Witnesses:** {result.human_factors.potential_witnesses}")
 
                         st.markdown("---")
-                        
+
                         st.markdown("##### 📋 Summary & Actions")
                         st.markdown(f"**Summary:** {result.accident_summary}")
                         st.markdown(f"**Recommended Action:** {result.recommended_action}")

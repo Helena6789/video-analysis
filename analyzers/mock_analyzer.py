@@ -1,13 +1,12 @@
-# analyzers/mock_analyzer.py
-import time
+import asyncio
 from core.analyzers import AccidentAnalyzer
 from core.schemas import AnalysisResult, EnvironmentalConditions, HumanFactors, VehicleDetails
 
 class MockVLMAnalyzer(AccidentAnalyzer):
-    def analyze_video(self, video_path: str) -> AnalysisResult:
-        # Simulate processing time
-        time.sleep(2)
-        
+    async def analyze_video(self, video_path: str) -> AnalysisResult:
+        # Simulate a non-blocking network call
+        await asyncio.sleep(2)
+
         # Return a hardcoded, realistic result conforming to the new schema
         return AnalysisResult(
             accident_summary="A rear-end collision occurred at a signalized intersection. Vehicle A (Blue Sedan) failed to stop and collided with the rear of Vehicle B (White SUV), which was stationary at a red light.",

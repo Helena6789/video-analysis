@@ -1,9 +1,8 @@
-
-
 import os
 import json
 import re
 import time
+import asyncio
 from dotenv import load_dotenv
 import google.generativeai as genai
 from pydantic import ValidationError
@@ -16,7 +15,7 @@ load_dotenv()
 
 class GeminiProAnalyzer(AccidentAnalyzer):
     """
-    An analyzer that uses a Gemini model.
+    An async analyzer that uses a Gemini model.
     It separates file management from the core analysis logic.
     """
     def __init__(self, model_name: str = 'gemini-2.5-pro'):
@@ -27,58 +26,57 @@ class GeminiProAnalyzer(AccidentAnalyzer):
         self.model_name = model_name
         self.model = genai.GenerativeModel(self.model_name)
 
-    def analyze_video(self, video_path: str) -> AnalysisResult:
+    async def analyze_video(self, video_path: str) -> AnalysisResult:
         """
-        Handles the full lifecycle (upload, analyze, delete) for a single video analysis.
-        This is a convenience wrapper for single-use cases.
+        Handles the full async lifecycle (upload, analyze, delete) for a single video analysis.
         """
-        st.info("Uploading video to Gemini... (This may take a moment)")
-        video_file = self.upload_video(video_path)
-        
+        video_file = await self.upload_video(video_path)
         try:
-            return self.perform_analysis_on_file(video_file)
+            return await self.perform_analysis_on_file(video_file)
         finally:
-            self.delete_video(video_file)
+            await self.delete_video(video_file)
 
-    def perform_analysis_on_file(self, video_file) -> AnalysisResult:
+    async def perform_analysis_on_file(self, video_file) -> AnalysisResult:
         """
         Performs analysis on a pre-uploaded video file object.
-        This is the core analysis logic, decoupled from file I/O.
         """
-        st.info(f"Analyzing with {self.model_name}...")
         prompt = self._build_prompt()
-        
+
         try:
-            response = self.model.generate_content(
+            # Run the blocking API call in a separate thread
+            response = await asyncio.to_thread(
+                self.model.generate_content,
                 [prompt, video_file],
                 request_options={"timeout": 1000}
             )
             raw_response_text = self._clean_response(response.text)
             analysis_data = json.loads(raw_response_text)
             result = AnalysisResult(**analysis_data)
-            st.info(f"Completed analysis with {self.model_name}.")
             return result
         except (ValidationError, json.JSONDecodeError) as e:
-            st.error(f"Data Validation Error from {self.model_name}. See details below.")
-            st.subheader("Raw Model Output:")
-            st.code(raw_response_text, language='json')
-            raise ValueError(f"Model output validation failed: {e}") from e
+            raise ValueError(f"Model output validation failed for {self.model_name}: {e}. Raw output: {raw_response_text}") from e
 
     @staticmethod
-    def upload_video(video_path: str):
-        """Static method to upload a video and return the file object."""
-        video_file = genai.upload_file(path=video_path)
-        while video_file.state.name == "PROCESSING":
-            time.sleep(2)
-            video_file = genai.get_file(video_file.name)
+    async def upload_video(video_path: str):
+        """Static async method to upload a video and return the file object."""
+
+        def upload_sync():
+            video_file = genai.upload_file(path=video_path)
+            while video_file.state.name == "PROCESSING":
+                time.sleep(2) # This is blocking, but it's inside a thread
+                video_file = genai.get_file(video_file.name)
+            return video_file
+
+        video_file = await asyncio.to_thread(upload_sync)
+
         if video_file.state.name == "FAILED":
             raise ValueError("Video processing failed on the server.")
         return video_file
 
     @staticmethod
-    def delete_video(video_file):
-        """Static method to delete an uploaded video file."""
-        genai.delete_file(video_file.name)
+    async def delete_video(video_file):
+        """Static async method to delete an uploaded video file."""
+        await asyncio.to_thread(genai.delete_file, video_file.name)
 
     def _clean_response(self, text: str) -> str:
         """Removes Markdown formatting from the model's response."""
