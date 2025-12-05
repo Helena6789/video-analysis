@@ -134,12 +134,18 @@ class GeminiProAnalyzer(AccidentAnalyzer):
           "accident_summary": "A concise, objective summary of the sequence of events in the accident.",
           "vehicles_involved": [
             {{
-              "vehicle_id": "A",
-              "description": "e.g., 'Blue Sedan', 'Red SUV'",
-              "damage": "e.g., 'Severe front-end damage', 'Minor rear bumper scratches'"
+              "vehicle_id": "An optional identifier, e.g., 'A', 'B'",
+              "color": "e.g., 'Blue', 'White', 'Black', 'Unknown'",
+              "type": "e.g., 'Sedan', 'SUV', 'Truck', "Bus", "Road vehicle"",
+              "damage_direction": "e.g., 'Front-end', 'Rear-end', 'Driver-side'",
+              "damage_level": "Choose one: 'None', 'Minor', 'Moderate', 'Severe', 'Unknown'"
             }}
           ],
-          "liability_indicator": "A clear statement on who is likely at fault and why. If unclear, state 'Undetermined'.",
+          "liability_indicator": {{
+            "color": "The color of the single at-fault vehicle.",
+            "type": "The type of the single at-fault vehicle.",
+            "driver_major_behavior": "The single key action of the at-fault driver that caused the accident, e.g., 'Speeding', 'Ran a red light'."
+          }},
           "environmental_conditions": {{
             "time_of_day": "Choose one: 'Daylight', 'Dusk', 'Night', 'Dawn', 'Unknown'",
             "weather": "e.g., 'Clear', 'Rainy', 'Snowing', 'Foggy', or 'Not Visible'",
@@ -147,14 +153,12 @@ class GeminiProAnalyzer(AccidentAnalyzer):
             "location_type": "e.g., 'Highway', 'Residential Street', 'Intersection', or 'Unknown'"
           }},
           "human_factors": {{
-            "occupants_visible": "e.g., 'Driver only', 'Driver and passenger', or 'Not Visible'",
-            "pedestrians_involved": "A string: 'Yes', 'No', or 'Unknown'",
-            "driver_behavior_flags": ["List of observed behaviors. If none, return an empty list []"],
-            "potential_witnesses": "Description of potential witnesses. If none, state 'None visible'."
+            "pedestrians_involved": "Choose one: 'Yes', 'No', 'Unknown'",
+            "potential_witnesses": "Choose one: 'Yes', 'No', 'Unknown'",
+            "injury_risk": "Choose one: 'Low', 'Medium', 'High', 'Unknown'"
           }},
           "collision_type": "Standard insurance term, e.g., 'Rear-End', 'T-Bone', or 'Unknown'",
           "traffic_controls_present": ["List of traffic controls observed. If none, return an empty list []"],
-          "injury_risk": "An assessment of the potential for occupant injury (e.g., 'Low', 'Medium', 'High', 'Unknown')",
           "recommended_action": "Next steps for the claims adjuster. If no specific action, state 'Standard procedure'.",
           "reasoning_trace": [
             "A step-by-step log of key frames or events. If the video is unclear, provide a trace explaining why."

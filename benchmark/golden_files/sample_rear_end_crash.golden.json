@@ -1,22 +1,34 @@
 {
-    "categorical_fields": {
+    "accident_summary": "A blue sedan (Vehicle A) traveling at moderate speed failed to slow down for stationary traffic at a signalized intersection and collided with the rear of a white SUV (Vehicle B).",
+    "environmental_conditions": {
         "time_of_day": "Daylight",
         "weather": "Clear",
         "road_conditions": "Dry",
-        "location_type": "Intersection",
-        "pedestrians_involved": "No",
-        "collision_type": "Rear-End"
+        "location_type": "Intersection"
     },
-    "insurance_fields": {
-        "accident_summary": "A blue sedan (Vehicle A) traveling at moderate speed failed to slow down for stationary traffic at a signalized intersection and collided with the rear of a white SUV (Vehicle B).",
-        "liability_indicator": "Vehicle A is determined to be 100% at fault for the collision due to a clear failure to maintain a safe following distance and inattentive driving.",
-        "injury_risk": "Medium",
-        "vehicle_damages": [
-            "Severe front-end damage to Vehicle A (sedan)",
-            "Moderate rear-end damage to Vehicle B (SUV)"
-        ],
-        "driver_behavior_flags": [
-            "Inattentive Driving"
-        ]
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Blue",
+            "type": "Sedan",
+            "damage_direction": "Front-end",
+            "damage_level": "Severe"
+        },
+        {
+            "color": "White",
+            "type": "SUV",
+            "damage_direction": "Rear-end",
+            "damage_level": "Moderate"
+        }
+    ],
+    "collision_type": "Rear-End",
+    "liability_indicator": {
+        "color" : "Blue",
+        "type": "Sedan",
+        "driver_major_behavior": "Changing lanes without signaling"
     }
 }

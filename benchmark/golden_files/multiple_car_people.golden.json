@@ -1,13 +1,13 @@
 {
-    "accident_summary": "A black sedan, traveling at a high rate of speed, rear-ends a slow-moving vehicle towing red agricultural equipment. The impact causes the sedan to launch into the air, flip, and roll violently multiple times, scattering a large amount of debris across the highway before coming to a rest.",
+    "accident_summary": "A multi-vehicle, chain-reaction rear-end collision occurred in a line of stopped or slow-moving traffic. The video pans across the aftermath, showing several damaged vehicles, starting with a grey sedan that has severe front-end damage and a detached front wheel, and continuing down the line to reveal multiple other vehicles with varying degrees of front-end and rear-end damage.",
     "environmental_conditions": {
         "time_of_day": "Daylight",
         "weather": "Clear",
         "road_conditions": "Dry",
-        "location_type": "Highway"
+        "location_type": "Residential Street"
     },
     "human_factors": {
-        "pedestrians_involved": "No",
+        "pedestrians_involved": "Yes",
         "potential_witnesses": "Yes",
         "injury_risk": "Medium"
     },

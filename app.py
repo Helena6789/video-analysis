@@ -48,28 +48,44 @@ ANALYZER_CATALOG = {
 # --- UI Rendering Functions ---
 
 def display_accuracy_scorecard(sync_scores, judge_scores):
-    """Renders the full, two-part accuracy scorecard."""
+    """Renders the final, domain-driven scorecard."""
     st.markdown("##### 🎯 Accuracy Scorecard")
 
-    # --- Part 1: Objective Metrics ---
-    st.markdown("###### Objective Metrics (Word & Phrase Matching)")
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-    col1.metric("Struct. F1", f"{sync_scores['categorical_f1']:.2f}", help="F1-Score for structured fields like weather, time of day, etc.")
-    col2.metric("Injury Score", f"{sync_scores['injury_score']:.2f}", help="Hybrid score for injury classification and justification.")
-    col3.metric("Summary (BLEU)", f"{sync_scores['summary_bleu']:.2f}", help="Phrase overlap for the summary.")
-    col4.metric("Summary (METEOR)", f"{sync_scores['summary_meteor']:.2f}", help="Semantic similarity for the summary.")
-    col5.metric("Liability (BLEU)", f"{sync_scores['liability_bleu']:.2f}", help="Phrase overlap for the liability statement.")
-    col6.metric("Liability (METEOR)", f"{sync_scores['liability_meteor']:.2f}", help="Semantic similarity for the liability statement.")
+    # --- Domain & Objective Scores ---
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric(
+        "Environment (F1)",
+        f"{sync_scores['environment_score']:.2f}",
+        help="F1-Score for time_of_day, weather, road_conditions, and location_type."
+    )
+    col2.metric(
+        "Human Factors",
+        f"{sync_scores['human_factors_score']:.2f}",
+        help="Weighted accuracy for injury_risk (60%), pedestrians_involved (30%), and potential_witnesses (10%)."
+    )
+    col3.metric(
+        "Vehicle Precision",
+        f"{sync_scores['vehicle_precision']:.2f}",
+        help="Of the vehicles the model identified, what percentage were correct? (Based on weighted attribute matching)."
+    )
+    col4.metric(
+        "Vehicle Recall",
+        f"{sync_scores['vehicle_recall']:.2f}",
+        help="Of the vehicles in the ground truth, what percentage did the model correctly identify?"
+    )
+    col5.metric(
+        "Liability Score",
+        f"{sync_scores['liability_score']:.2f}",
+        help="Weighted similarity for identifying the at-fault party, based on behavior (50%), color (25%), and type (25%)."
+    )
 
-    # --- Part 2: LLM Judge Ratings ---
-    st.markdown("###### Intelligent Ratings (LLM as a Judge)")
-    jcol1, jcol2, jcol3, jcol4, jcol5, jcol6 = st.columns(6)
-    jcol1.metric("Summary (1-100)", f"{judge_scores['summary_rating']}", help="Judge's score for summary accuracy.")
-    jcol2.metric("Liability (1-100)", f"{judge_scores['liability_rating']}", help="Judge's score for the liability assessment.")
-    jcol3.metric("Damage Precision", f"{judge_scores['damage_precision']:.2f}", help="Judge's score for damage description relevance (Precision).")
-    jcol4.metric("Damage Recall", f"{judge_scores['damage_recall']:.2f}", help="Judge's score for damage description completeness (Recall).")
-    jcol5.metric("Behavior Precision", f"{judge_scores['behavior_precision']:.2f}", help="Judge's score for behavior flag relevance (Precision).")
-    jcol6.metric("Behavior Recall", f"{judge_scores['behavior_recall']:.2f}", help="Judge's score for behavior flag completeness (Recall).")
+    # --- LLM Judge Rating ---
+    st.markdown("###### Intelligent Summary Rating (LLM as a Judge)")
+    st.metric(
+        "Summary Rating (1-100)",
+        f"{judge_scores['summary_rating']}",
+        help="LLM Judge's score for the semantic accuracy and completeness of the accident summary."
+    )
 
     st.markdown("---")
 
@@ -113,14 +129,16 @@ def display_analysis_dashboard(result: AnalysisResult):
     st.markdown("##### 🚩 Key Flags")
     col1, col2, col3 = st.columns(3)
     with col1:
-        if "high" in result.injury_risk.lower():
-            st.error(f"**Injury Risk:** {result.injury_risk}")
-        elif "medium" in result.injury_risk.lower():
-            st.warning(f"**Injury Risk:** {result.injury_risk}")
+        # Correctly access injury_risk from the human_factors object
+        if "high" in result.human_factors.injury_risk.lower():
+            st.error(f"**Injury Risk:** {result.human_factors.injury_risk}")
+        elif "medium" in result.human_factors.injury_risk.lower():
+            st.warning(f"**Injury Risk:** {result.human_factors.injury_risk}")
         else:
-            st.info(f"**Injury Risk:** {result.injury_risk}")
+            st.info(f"**Injury Risk:** {result.human_factors.injury_risk}")
     with col2:
-        st.warning(f"**Liability:** {result.liability_indicator}")
+        # Format the new liability object into a readable string
+        st.warning(f"**At-Fault Party:** Color: {result.liability_indicator.color}, Type: {result.liability_indicator.type}")
     with col3:
         st.info(f"**Collision Type:** {result.collision_type}")
 
@@ -134,23 +152,24 @@ def display_analysis_dashboard(result: AnalysisResult):
         st.markdown(f"**- Weather:** {result.environmental_conditions.weather}")
         st.markdown(f"**- Road Conditions:** {result.environmental_conditions.road_conditions}")
         st.markdown(f"**- Location Type:** {result.environmental_conditions.location_type}")
+        st.markdown(f"**- Traffic Controls:** {', '.join(result.traffic_controls_present)}")
 
     with c2:
         st.markdown("##### 👨‍👩‍👧 Human Factors")
-        st.markdown(f"**- Occupants Visible:** {result.human_factors.occupants_visible}")
         st.markdown(f"**- Pedestrians Involved:** {result.human_factors.pedestrians_involved}")
-        st.markdown(f"**- Driver Behavior:** {', '.join(result.human_factors.driver_behavior_flags)}")
         st.markdown(f"**- Potential Witnesses:** {result.human_factors.potential_witnesses}")
+        st.markdown(f"**- Injury Risk:** {result.human_factors.injury_risk}")
 
     st.markdown("---")
 
     st.markdown("##### 📋 Summary & Actions")
     st.markdown(f"**Summary:** {result.accident_summary}")
+    st.markdown(f"**Liability Reasoning:** {result.liability_indicator.driver_major_behavior}")
     st.markdown(f"**Recommended Action:** {result.recommended_action}")
 
     st.markdown("##### 🚗 Vehicles Involved")
     for vehicle in result.vehicles_involved:
-        st.markdown(f"- **Vehicle {vehicle.vehicle_id} ({vehicle.description}):** {vehicle.damage}")
+        st.markdown(f"- **{vehicle.color} {vehicle.type}:** {vehicle.damage_level} damage to the {vehicle.damage_direction}.")
 
     # --- Raw Data/Reasoning ---
     with st.expander("Show System Reasoning & Raw Data"):

@@ -1,0 +1,34 @@
+{
+    "accident_summary": "A white SUV, proceeding straight through a large intersection at a significant speed, collided with a black sedan, apparently failing to stop for a traffic signal. The impact caused both vehicles to spin and come to a rest in the middle of the intersection.",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "White",
+            "type": "SUV",
+            "damage_direction": "Front-end",
+            "damage_level": "Severe"
+        },
+        {
+            "color": "Black",
+            "type": "Sedan",
+            "damage_direction": "Passenger-side",
+            "damage_level": "Moderate"
+        }
+    ],
+    "collision_type": "T-Bone",
+    "liability_indicator": {
+        "color" : "White",
+        "type": "SUV",
+        "driver_major_behavior": "Speeding and inattentive Driving"
+    }
+}

@@ -77,46 +77,30 @@ def create_pdf_report(results_data: dict) -> bytes:
             pdf.section_body("Analysis failed for this model.")
             continue
 
-        # --- Scorecards ---
-        sync_scores = model_data.get("sync_scores")
-        judge_scores = model_data.get("judge_scores")
-        if sync_scores and judge_scores:
-            pdf.section_title("Accuracy Scorecard")
-            pdf.metric_row(["Struct. F1", "Injury Score", "Summary (BLEU)", "Summary (METEOR)", "Liability (BLEU)"], is_bold=True)
-            pdf.metric_row([f"{sync_scores['categorical_f1']:.2f}", f"{sync_scores['injury_score']:.2f}", f"{sync_scores['summary_bleu']:.2f}", f"{sync_scores['summary_meteor']:.2f}", f"{sync_scores['liability_bleu']:.2f}"])
-            pdf.ln(2)
-            pdf.metric_row(["Dmg Precision", "Dmg Recall", "Beh Precision", "Beh Recall", "Summary Rating", "Liability Rating"], is_bold=True)
-            pdf.metric_row([f"{judge_scores['damage_precision']:.2f}", f"{judge_scores['damage_recall']:.2f}", f"{judge_scores['behavior_precision']:.2f}", f"{judge_scores['behavior_recall']:.2f}", f"{judge_scores['summary_rating']}", f"{judge_scores['liability_rating']}"])
-            pdf.ln(5)
-
-        # --- Performance ---
-        performance = model_data.get("performance", {})
-        judge_performance = model_data.get("judge_performance", {})
-        total_perf = performance.copy()
-        if judge_performance:
-            for key in total_perf:
-                total_perf[key] += judge_performance.get(key, 0)
-
-        pdf.section_title("Performance Metrics")
-        pdf.metric_row(["Total Latency (s)", "Total Cost ($)", "Total Input Tokens", "Total Output Tokens"], is_bold=True)
-        pdf.metric_row([f"{total_perf.get('latency', 0):.2f}", f"{total_perf.get('estimated_cost', 0):.4f}", f"{total_perf.get('input_tokens', 0):,}", f"{total_perf.get('output_tokens', 0):,}"])
-        pdf.ln(5)
-
         # --- Dashboard ---
         pdf.section_title("Analysis Dashboard")
         pdf.section_body({"Summary": result['accident_summary']})
-        pdf.section_body({"Liability": result['liability_indicator']})
+
+        liability = result['liability_indicator']
+        pdf.section_body({"At-Fault Party": f"{liability['color']} {liability['type']}"})
+        pdf.section_body({"Liability Reasoning": liability['driver_major_behavior']})
+
         pdf.section_body({"Recommended Action": result['recommended_action']})
-        pdf.section_body({"Injury Risk": result['injury_risk']})
+
+        hf = result['human_factors']
+        pdf.section_body({
+            "Injury Risk": hf['injury_risk'],
+            "Pedestrians Involved": hf['pedestrians_involved'],
+            "Potential Witnesses": hf['potential_witnesses']
+        })
 
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(0, 5, "Vehicles Involved:")
         pdf.ln()
         pdf.set_font('Arial', '', 10)
         for v in result['vehicles_involved']:
-            pdf.cell(0, 5, f"- Vehicle {v['vehicle_id']} ({v['description']}): {v['damage']}")
+            pdf.cell(0, 5, f"- {v['color']} {v['type']}: {v['damage_level']} damage to the {v['damage_direction']}.")
             pdf.ln()
-
-        # ... Add other fields as needed ...
+        pdf.ln(4)
 
     return bytes(pdf.output())
