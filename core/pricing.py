@@ -24,7 +24,7 @@ GEMINI_PRICING = {
             "output": 18.00
         }
     },
-    "gemini-2.5-pro": { # Assuming same pricing for this hypothetical model
+    "gemini-2.5-pro": {
         "tier_1": {
             "input": 1.25,
             "output": 10.00
@@ -32,6 +32,26 @@ GEMINI_PRICING = {
         "tier_2": {
             "input": 2.50,
             "output": 15.00
+        }
+    },
+    "gemini-2.5-flash": { # Assuming same pricing for this hypothetical model
+        "tier_1": {
+            "input": 0.3,
+            "output": 2.5
+        },
+        "tier_2": {
+            "input": 0.3,
+            "output": 2.5
+        }
+    },
+    "gemini-2.5-flash-lite": { # Assuming same pricing for this hypothetical model
+        "tier_1": {
+            "input": 0.1,
+            "output": 0.4
+        },
+        "tier_2": {
+            "input": 0.1,
+            "output": 0.4
         }
     }
 }

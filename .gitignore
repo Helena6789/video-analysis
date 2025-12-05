@@ -11,3 +11,4 @@ venv
 
 *.pdf
 benchmark/videos/*.*
+reports/*.json

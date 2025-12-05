@@ -9,16 +9,34 @@ from analyzers.gemini_analyzer import GeminiProAnalyzer
 from core.analyzers import AccidentAnalyzer
 from core.schemas import AnalysisResult
 from core.evaluation import evaluate_sync_metrics, evaluate_llm_judge_metrics_async
+from core.exporter import create_pdf_report
 
 # Load environment variables
 load_dotenv()
 
 # --- Configuration ---
-st.set_page_config(
-    page_title="VLM Accident Analysis",
-    page_icon="🚗",
-    layout="wide"
-)
+st.set_page_config(page_title="VLM Accident Analysis", page_icon="🚗", layout="wide")
+
+# --- Custom CSS for sidebar buttons ---
+st.markdown("""
+    <style>
+    [data-testid="stSidebar"] .stButton>button {
+        border: none;
+        background-color: transparent;
+        text-align: left !important;
+        display: block !important;
+        width: 100%;
+    }
+    [data-testid="stSidebar"] .stButton>button:hover {
+        background-color: #eee;
+        color: #000;
+    }
+    .stDownloadButton>button {
+        background-color: #4CAF50; /* Green */
+        color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- Analyzer Strategy Mapping ---
 ANALYZER_CATALOG = {
@@ -143,6 +161,13 @@ def display_analysis_dashboard(result: AnalysisResult):
         st.json(result.model_dump_json(indent=4))
 
 # --- Backend Logic ---
+def log_message(status, message):
+    timestamp = datetime.now().strftime('%H:%M:%S')
+    status.write(f"`[{timestamp}]` {message}")
+
+def log_success(status, message):
+    timestamp = datetime.now().strftime('%H:%M:%S')
+    status.markdown(f"`[{timestamp}]` <span style='color:green;'>{message}</span>", unsafe_allow_html=True)
 
 def get_analyzer(model_name: str) -> AccidentAnalyzer:
     """Factory function to get an analyzer instance."""
@@ -156,18 +181,10 @@ def get_analyzer(model_name: str) -> AccidentAnalyzer:
     raise ValueError("Invalid analyzer selected")
 
 async def run_analysis_async(selected_models: list, video_path: str, status):
-    """Runs the analysis for all selected models concurrently and processes them as they complete."""
+    """Runs the analysis for all selected models concurrently."""
     results = {}
     gemini_models = {m for m in selected_models if m.startswith("Gemini")}
     uploaded_video_file = None
-
-    def log_message(message):
-        timestamp = datetime.now().strftime('%H:%M:%S')
-        status.write(f"`[{timestamp}]` {message}")
-
-    def log_success(message):
-        timestamp = datetime.now().strftime('%H:%M:%S')
-        status.markdown(f"`[{timestamp}]` <span style='color:green;'>{message}</span>", unsafe_allow_html=True)
 
     async def run_and_tag(model_name, coro):
         """Wrapper to run a coroutine and tag its result with the model name."""
@@ -180,54 +197,105 @@ async def run_analysis_async(selected_models: list, video_path: str, status):
     try:
         tasks = []
         if gemini_models:
-            log_message("Uploading video to Gemini... (This may take a moment)")
+            log_message(status, "Uploading video to Gemini...")
             uploaded_video_file = await GeminiProAnalyzer.upload_video(video_path)
         for model_name in selected_models:
             if ANALYZER_CATALOG[model_name][0] is None:
                 results[model_name] = ("Model not implemented.", None)
                 continue
-            log_message(f"Queuing analysis for {model_name}...")
+            log_message(status, f"Queuing analysis for {model_name}...")
             analyzer = get_analyzer(model_name)
-            if model_name in gemini_models:
-                coro = analyzer.perform_analysis_on_file(uploaded_video_file, video_path)
-            else:
-                coro = analyzer.analyze_video(video_path)
+            coro = analyzer.analyze_video(video_path) if model_name not in gemini_models else analyzer.perform_analysis_on_file(uploaded_video_file, video_path)
             tasks.append(run_and_tag(model_name, coro))
 
-        log_message(f"Running {len(tasks)} tasks in parallel...")
+        log_message(status, f"Running {len(tasks)} tasks in parallel...")
         for future in asyncio.as_completed(tasks):
             model_name, result_tuple, error = await future
             if error:
                 st.error(f"An error occurred with {model_name}: {error}")
                 results[model_name] = (None, f"An error occurred: {error}")
             else:
-                log_success(f"Completed analysis with {model_name}.")
+                log_success(status, f"Completed analysis for {model_name}.")
                 results[model_name] = result_tuple
     finally:
         if uploaded_video_file:
-            log_message("Cleaning up uploaded resources...")
+            log_message(status, "Cleaning up uploaded resources...")
             await GeminiProAnalyzer.delete_video(uploaded_video_file)
+
     return results
+
+# Initialize session state
+if 'results' not in st.session_state:
+    st.session_state.results = None
+if 'selected_report' not in st.session_state:
+    st.session_state.selected_report = "— New Analysis —"
+if 'is_new_analysis' not in st.session_state:
+    st.session_state.is_new_analysis = True
 
 async def main():
     """The main async function for the Streamlit app."""
-    st.title("🚗 VLM Accident Analysis Prototype")
-    st.markdown("Upload a video to analyze potential insurance liabilities and risks.")
+    col1, col2 = st.columns([0.8, 0.2])
+    with col1:
+        st.title("🚗 VLM Accident Analysis Prototype")
+
+    # The export button will be placed in col2 later if results exist
 
     # --- Sidebar ---
     with st.sidebar:
-        st.header("Configuration")
-        options = list(ANALYZER_CATALOG.keys())
-        selected_models = st.multiselect("Select Model(s) for Comparison", options=options, default=[])
+        if st.button("➕ New Analysis"):
+            st.session_state.clear()
+            st.rerun()
+
         st.markdown("---")
-        st.header("Evaluation Settings")
-        judge_model = st.selectbox("Select Judge Model (for accuracy)", options=["gemini-2.5-flash", "gemini-2.5-flash-lite"], index=0, help="The model used to score semantic similarity for list-based fields.")
-        st.markdown("---")
-        st.info("Select one or more models to compare their analysis.")
-        if any(model.startswith("Gemini") for model in selected_models) and not os.getenv("GEMINI_API_KEY"):
-            st.warning("Please provide your Gemini API key in a `.env` file to use Gemini models.")
+        st.header("Analysis")
+
+        report_files = sorted([f for f in os.listdir("reports") if f.endswith(".json")], reverse=True)
+
+        for report_file in report_files:
+            display_name = report_file.replace(".json", "")
+            if st.button(display_name, key=report_file, use_container_width=True):
+                st.session_state.selected_report = report_file
+                try:
+                    with open(os.path.join("reports", report_file), "r") as f:
+                        st.session_state.results = json.load(f)
+                    st.session_state.is_new_analysis = False
+                except Exception as e:
+                    st.error(f"Failed to load report: {e}")
+                    st.session_state.results = None
+                st.rerun()
 
     # --- Main Content ---
+    if st.session_state.get('results'):
+        with col2:
+            pdf_bytes = create_pdf_report(st.session_state.results)
+            st.download_button(
+                label="Export as PDF Report",
+                data=pdf_bytes,
+                file_name=f"{st.session_state.results['report_id']}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+        # When displaying a result, the judge model is read from the saved config
+        judge_model = st.session_state.results.get("config", {}).get("judge_model", "gemini-2.5-flash")
+        await display_results_ui(st.session_state.results, judge_model)
+    else:
+        await run_new_analysis_ui()
+
+async def run_new_analysis_ui():
+    """The UI for running a new analysis."""
+    st.markdown("Upload a video to analyze potential insurance liabilities and risks.")
+
+    # --- Configuration for New Analysis ---
+    st.markdown("##### Configuration")
+    col1, col2 = st.columns(2)
+    with col1:
+        selected_models = st.multiselect("Select Model(s) for Comparison", options=list(ANALYZER_CATALOG.keys()), default=[])
+    with col2:
+        judge_model = st.selectbox("Select Judge Model (for accuracy)", options=["gemini-2.5-flash", "gemini-2.5-flash-lite"], index=0)
+
+    if any(model.startswith("Gemini") for model in selected_models) and not os.getenv("GEMINI_API_KEY"):
+        st.warning("Please provide your Gemini API key in a `.env` file to use Gemini models.")
+
     uploaded_file = st.file_uploader("Upload a dashcam or CCTV video", type=["mp4", "mov", "avi"])
 
     if uploaded_file is not None:
@@ -245,7 +313,7 @@ async def main():
                     golden_data = json.load(f)
                 st.success(f"Found and loaded ground truth file: **{golden_filename}**")
             except Exception as e:
-                st.warning(f"Found ground truth file, but failed to load it: {e}. Accuracy will not be evaluated.")
+                st.warning(f"Found ground truth file, but failed to load it: {e}.")
                 golden_data = None
 
         with st.expander("🎬 Preview Video", expanded=False):
@@ -253,41 +321,127 @@ async def main():
             with video_col:
                 st.video(video_path)
 
-        if st.button("Analyze Video", type="primary"):
+        if st.button("Analyze Video", type="primary", key="analyze_button"):
             if not selected_models:
-                st.warning("Please select at least one model from the sidebar to begin analysis.")
+                st.warning("Please select at least one model.")
             else:
                 with st.status("Running analysis...", expanded=True) as status:
-                    results = await run_analysis_async(selected_models, video_path, status)
+                    analysis_results = await run_analysis_async(selected_models, video_path, status)
 
-                st.header("Analysis Comparison")
-                display_tabs = st.tabs([name for name in selected_models if name in results])
+                    # Construct the full results object
+                    base_filename, _ = os.path.splitext(uploaded_file.name)
+                    report_id = f"{base_filename}_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-                for i, model_name in enumerate(selected_models):
-                    if model_name not in results: continue
-                    with display_tabs[i]:
-                        result, performance = results[model_name]
+                    results_obj = {
+                        "report_id": report_id,
+                        "video_filename": uploaded_file.name,
+                        "config": {
+                            "selected_models": selected_models,
+                            "judge_model": judge_model
+                        },
+                        "models": {}
+                    }
 
-                        if isinstance(result, AnalysisResult):
-                            display_analysis_dashboard(result)
+                    for model_name, (result, performance) in analysis_results.items():
+                        # Run evaluation on the fly before saving
+                        sync_scores = None
+                        judge_scores = None
+                        judge_performance = None
+                        if golden_data and isinstance(result, AnalysisResult):
+                            log_message(status, f"Evaluating accuracy for {model_name}...")
+                            sync_scores = evaluate_sync_metrics(result, golden_data)
+                            judge_scores, judge_performance = await evaluate_llm_judge_metrics_async(result, golden_data, judge_model)
+                            log_success(status, f"Completed accuracy evaluation for {model_name}")
 
-                            judge_scores = None
-                            judge_performance = None
+                        results_obj["models"][model_name] = {
+                            "result": result.model_dump() if result else None,
+                            "performance": performance,
+                            "sync_scores": sync_scores,
+                            "judge_scores": judge_scores,
+                            "judge_performance": judge_performance
+                        }
 
-                            if golden_data:
-                                # Run both evaluations
-                                sync_scores = evaluate_sync_metrics(result, golden_data)
-                                with st.spinner(f"Getting LLM Judge ratings for {model_name}..."):
-                                    judge_scores, judge_performance = await evaluate_llm_judge_metrics_async(result, golden_data, judge_model)
+                    # Automatic Saving
+                    report_filename = f"{results_obj['report_id']}.json"
+                    with open(os.path.join("reports", report_filename), "w") as f:
+                        json.dump(results_obj, f, indent=4)
+                    st.toast(f"Analysis automatically saved as `{report_filename}`")
 
-                                display_accuracy_scorecard(sync_scores, judge_scores)
+                    st.session_state.results = results_obj
+                    st.session_state.is_new_analysis = False
+                    status.update(label="All tasks complete!", state="complete")
+                    st.rerun()
 
-                            display_performance_metrics(performance, judge_performance)
-                        else:
-                            # Display error or info message
-                            st.error(f"Could not generate a report for {model_name}.")
-                            st.code(str(result), language=None)
-                            st.code(str(performance), language=None)
+async def display_results_ui(results_data, judge_model):
+    """Renders the results from a saved report or a new analysis."""
+    st.header("Analysis Comparison")
+    st.info(f"Displaying results for **{results_data['video_filename']}**")
+
+    # --- Display Saved Configuration ---
+    st.markdown("##### Configuration Used")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.multiselect("Models Used", options=results_data["config"]["selected_models"], default=results_data["config"]["selected_models"], disabled=True)
+    with col2:
+        st.text_input("Judge Model Used", value=results_data["config"]["judge_model"], disabled=True)
+
+    display_tabs = st.tabs(list(results_data["models"].keys()))
+
+    for i, model_name in enumerate(results_data["models"].keys()):
+        with display_tabs[i]:
+            model_data = results_data["models"][model_name]
+            result_dict = model_data.get("result")
+            performance = model_data.get("performance")
+
+            if result_dict:
+                result = AnalysisResult(**result_dict)
+
+                # Get saved scores from the report
+                sync_scores = model_data.get("sync_scores")
+                judge_scores = model_data.get("judge_scores")
+                judge_performance = model_data.get("judge_performance")
+
+                # --- Display main results immediately ---
+                display_performance_metrics(performance, judge_performance)
+                display_analysis_dashboard(result)
+
+                # --- Handle Accuracy Evaluation ---
+                # If scores are already saved in the report, just display them
+                if sync_scores and judge_scores:
+                    display_accuracy_scorecard(sync_scores, judge_scores)
+                # If this is a new analysis, run the evaluation now
+                elif st.session_state.get('is_new_analysis', False):
+                    golden_data = None
+                    base_filename, _ = os.path.splitext(results_data['video_filename'])
+                    golden_filename = f"{base_filename}.golden.json"
+                    golden_filepath = os.path.join("benchmark", "golden_files", golden_filename)
+                    if os.path.exists(golden_filepath):
+                        with open(golden_filepath, "r") as f:
+                            golden_data = json.load(f)
+
+                    if golden_data:
+                        with st.spinner(f"Evaluating accuracy for {model_name}..."):
+                            sync_scores = evaluate_sync_metrics(result, golden_data)
+                            judge_scores, judge_performance = await evaluate_llm_judge_metrics_async(result, golden_data, judge_model)
+
+                            # Update the session state with the new scores for saving
+                            st.session_state.results["models"][model_name]["sync_scores"] = sync_scores
+                            st.session_state.results["models"][model_name]["judge_scores"] = judge_scores
+                            st.session_state.results["models"][model_name]["judge_performance"] = judge_performance
+
+                            # Rerun to update the UI with the new scores and performance
+                            st.rerun()
+            else:
+                st.error(f"Could not generate a report for {model_name}.")
+                st.code(str(performance), language=None)
+
+
 
 if __name__ == "__main__":
+    # Initialize session state
+    if 'results' not in st.session_state:
+        st.session_state.results = None
+    if 'selected_report' not in st.session_state:
+        st.session_state.selected_report = "— New Analysis —"
+
     asyncio.run(main())

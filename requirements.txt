@@ -6,3 +6,4 @@ moviepy
 tiktoken
 scikit-learn
 nltk
+fpdf2
