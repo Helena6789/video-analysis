@@ -7,20 +7,16 @@
         "pedestrians_involved": "No",
         "collision_type": "Rear-End"
     },
-    "descriptive_fields": {
+    "insurance_fields": {
         "accident_summary": "A blue sedan (Vehicle A) traveling at moderate speed failed to slow down for stationary traffic at a signalized intersection and collided with the rear of a white SUV (Vehicle B).",
-        "liability_indicator": "Vehicle A is determined to be 100% at fault for the collision due to a clear failure to maintain a safe following distance and inattentive driving."
-    },
-    "list_fields": {
+        "liability_indicator": "Vehicle A is determined to be 100% at fault for the collision due to a clear failure to maintain a safe following distance and inattentive driving.",
+        "injury_risk": "Medium",
+        "vehicle_damages": [
+            "Severe front-end damage to Vehicle A (sedan)",
+            "Moderate rear-end damage to Vehicle B (SUV)"
+        ],
         "driver_behavior_flags": [
             "Inattentive Driving"
-        ],
-        "reasoning_trace": [
-            "Vehicle B is fully stopped at a red traffic light in a line of traffic.",
-            "Vehicle A is approaching from the rear at a consistent speed with no apparent deceleration.",
-            "The driver of Vehicle A does not appear to be looking forward at the road.",
-            "Vehicle A impacts the rear of Vehicle B without any prior braking.",
-            "Both vehicles move forward slightly from the force of the impact."
         ]
     }
 }

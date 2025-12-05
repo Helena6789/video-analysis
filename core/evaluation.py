@@ -21,14 +21,29 @@ except LookupError:
     nltk.download('punkt')
     nltk.download('wordnet')
 
-# Initialize tokenizer for token counting
 tokenizer = tiktoken.get_encoding("cl100k_base")
 
-def calculate_categorical_f1(model_result: AnalysisResult, golden_data: dict) -> float:
-    """Calculates the F1 score for the structured categorical fields."""
-    golden_values = list(golden_data["categorical_fields"].values())
+# --- Part 1: Synchronous, Objective Metrics ---
 
-    model_values = [
+def calculate_injury_score(model_risk: str, golden_risk: str) -> float:
+    model_risk_lower = model_risk.lower().strip()
+    golden_risk_lower = golden_risk.lower().strip()
+    classification_score = 0.0
+    extracted_risk = "unknown"
+    for risk_level in ["low", "medium", "high"]:
+        if model_risk_lower.startswith(risk_level):
+            extracted_risk = risk_level
+            break
+    if extracted_risk == golden_risk_lower:
+        classification_score = 1.0
+    elif golden_risk_lower in extracted_risk or extracted_risk in golden_risk_lower:
+        classification_score = 0.5
+
+    return classification_score
+
+def evaluate_sync_metrics(model_result: AnalysisResult, golden_data: dict) -> dict:
+    golden_cat = golden_data["categorical_fields"]
+    model_cat_values = [
         model_result.environmental_conditions.time_of_day,
         model_result.environmental_conditions.weather,
         model_result.environmental_conditions.road_conditions,
@@ -36,109 +51,109 @@ def calculate_categorical_f1(model_result: AnalysisResult, golden_data: dict) ->
         model_result.human_factors.pedestrians_involved,
         model_result.collision_type
     ]
+    f1 = f1_score(list(golden_cat.values()), model_cat_values, average='weighted', zero_division=0)
+    insurance_golden = golden_data["insurance_fields"]
+    summary_ref = [word_tokenize(insurance_golden["accident_summary"].lower())]
+    summary_cand = word_tokenize(model_result.accident_summary.lower())
+    summary_bleu = sentence_bleu(summary_ref, summary_cand, weights=(0.5, 0.5))
+    summary_meteor = meteor_score(summary_ref, summary_cand)
+    liability_ref = [word_tokenize(insurance_golden["liability_indicator"].lower())]
+    liability_cand = word_tokenize(model_result.liability_indicator.lower())
+    liability_bleu = sentence_bleu(liability_ref, liability_cand, weights=(0.5, 0.5))
+    liability_meteor = meteor_score(liability_ref, liability_cand)
+    injury_score = calculate_injury_score(
+        model_result.injury_risk,
+        insurance_golden["injury_risk"]
+    )
+    return {
+        "categorical_f1": f1,
+        "summary_bleu": summary_bleu,
+        "summary_meteor": summary_meteor,
+        "liability_bleu": liability_bleu,
+        "liability_meteor": liability_meteor,
+        "injury_score": injury_score
+    }
 
-    return f1_score(golden_values, model_values, average='weighted', zero_division=0)
+# --- Part 2: Asynchronous, Intelligent "LLM as a Judge" Metrics ---
 
-def calculate_text_similarity(model_text: str, golden_text: str) -> dict:
-    """Calculates BLEU and METEOR scores for descriptive text fields."""
-    reference = [word_tokenize(golden_text.lower())]
-    candidate = word_tokenize(model_text.lower())
+async def evaluate_llm_judge_metrics_async(model_result: AnalysisResult, golden_data: dict, judge_model_name: str) -> tuple[dict, dict]:
+    """Uses a single LLM call to get ratings and precision/recall for key fields."""
 
-    bleu = sentence_bleu(reference, candidate, weights=(0.5, 0.5))
-    meteor = meteor_score(reference, candidate)
-
-    return {"bleu": bleu, "meteor": meteor}
-
-async def evaluate_accuracy(model_result: AnalysisResult, golden_data: dict, judge_model_name: str) -> tuple[dict, dict]:
-    """
-    Generates a full accuracy scorecard and tracks the performance of the judge model.
-    Returns (scorecard, judge_performance).
-    """
     start_time = time.monotonic()
-
-    # --- Step 1: Calculate synchronous metrics ---
-    f1 = calculate_categorical_f1(model_result, golden_data)
-    summary_scores = calculate_text_similarity(model_result.accident_summary, golden_data["descriptive_fields"]["accident_summary"])
-    liability_scores = calculate_text_similarity(model_result.liability_indicator, golden_data["descriptive_fields"]["liability_indicator"])
-
-    # --- Step 2: Prepare for the single async LLM judge call ---
-    model_trace = model_result.reasoning_trace
-    golden_trace = golden_data["list_fields"]["reasoning_trace"]
-    model_behaviors = model_result.human_factors.driver_behavior_flags
-    golden_behaviors = golden_data["list_fields"]["driver_behavior_flags"]
-
+    insurance_golden = golden_data["insurance_fields"]
     judge_model = genai.GenerativeModel(judge_model_name)
 
-    # --- Step 3: Build the combined prompt ---
-    combined_prompt = f"""
-    You are an AI assistant acting as an impartial judge. Your task is to evaluate two sets of lists (reasoning trace and driver behaviors) and return a single JSON object with four distinct evaluations.
+    model_damages = [f'{v.description}: {v.damage}' for v in model_result.vehicles_involved]
+    model_behaviors = model_result.human_factors.driver_behavior_flags
+    golden_damages = insurance_golden['vehicle_damages']
+    golden_behaviors = insurance_golden['driver_behavior_flags']
 
-    **Input Data:**
-    - Golden Reasoning Trace: {json.dumps(golden_trace)}
-    - Model Reasoning Trace: {json.dumps(model_trace)}
-    - Golden Driver Behaviors: {json.dumps(golden_behaviors)}
-    - Model Driver Behaviors: {json.dumps(model_behaviors)}
+    prompt = f"""
+    You are an AI assistant acting as an impartial judge. Your task is to evaluate a model's analysis of a car accident against a "golden" ground truth. Provide a comprehensive evaluation in a single JSON object.
 
-    **Your Task (Perform all four):**
-    1.  **`trace_precision`**: For each item in "Model Reasoning Trace", is it semantically consistent with at least one item in "Golden Reasoning Trace"?
-    2.  **`trace_recall`**: For each item in "Golden Reasoning Trace", is its core meaning captured by at least one item in "Model Reasoning Trace"?
-    3.  **`behavior_precision`**: For each item in "Model Driver Behaviors", is it semantically consistent with at least one item in "Golden Driver Behaviors"?
-    4.  **`behavior_recall`**: For each item in "Golden Driver Behaviors", is its core meaning captured by at least one item in "Model Driver Behaviors"?
+    **EVALUATION CRITERIA:**
+    1.  **Ratings (1-100)**: For `summary` and `liability`, provide an integer rating from 1 to 100 on how well the model's text captures the semantic meaning and key details of the golden text.
+    2.  **Precision/Recall**: For `damages` and `behaviors`, evaluate the semantic consistency between the model's list and the golden list. For each item in the list being evaluated, provide a boolean (true/false).
 
-    **Output Format:**
-    Respond with a single JSON object containing four keys. The value for each key should be another JSON object mapping the items from the list being evaluated to a boolean (true/false).
+    **GROUND TRUTH DATA:**
+    - Golden Summary: "{insurance_golden['accident_summary']}"
+    - Golden Liability: "{insurance_golden['liability_indicator']}"
+    - Golden Damages: {json.dumps(golden_damages)}
+    - Golden Behaviors: {json.dumps(golden_behaviors)}
 
-    Example response format:
+    **MODEL'S ANALYSIS:**
+    - Model Summary: "{model_result.accident_summary}"
+    - Model Liability: "{model_result.liability_indicator}"
+    - Model Damages: {json.dumps(model_damages)}
+    - Model Behaviors: {json.dumps(model_behaviors)}
+
+    **OUTPUT FORMAT:**
+    Respond with a single JSON object.
     ```json
     {{
-      "trace_precision": {{ "Model step 1": true, "Model step 2": false }},
-      "trace_recall": {{ "Golden step 1": true }},
+      "summary_rating": 90,
+      "liability_rating": 95,
+      "damage_precision": {{ "Model damage 1": true, "Model damage 2": false }},
+      "damage_recall": {{ "Golden damage 1": true }},
       "behavior_precision": {{ "Model behavior 1": true }},
       "behavior_recall": {{ "Golden behavior 1": false }}
     }}
     ```
     """
 
-    # --- Step 4: Make the single API call ---
-    response = await asyncio.to_thread(judge_model.generate_content, combined_prompt)
     try:
+        response = await asyncio.to_thread(judge_model.generate_content, prompt)
         json_part = response.text.split('```json')[1].split('```')[0]
         judgments = json.loads(json_part)
-    except (IndexError, json.JSONDecodeError):
-        judgments = {}
 
-    # --- Step 5: Calculate scores ---
-    trace_precision = sum(1 for v in judgments.get("trace_precision", {}).values() if v) / len(model_trace) if model_trace else 1.0
-    trace_recall = sum(1 for v in judgments.get("trace_recall", {}).values() if v) / len(golden_trace) if golden_trace else 1.0
-    behavior_precision = sum(1 for v in judgments.get("behavior_precision", {}).values() if v) / len(model_behaviors) if model_behaviors else 1.0
-    behavior_recall = sum(1 for v in judgments.get("behavior_recall", {}).values() if v) / len(golden_behaviors) if golden_behaviors else 1.0
+        damage_precision = sum(1 for v in judgments.get("damage_precision", {}).values() if v) / len(model_damages) if model_damages else 1.0
+        damage_recall = sum(1 for v in judgments.get("damage_recall", {}).values() if v) / len(golden_damages) if golden_damages else 1.0
+        behavior_precision = sum(1 for v in judgments.get("behavior_precision", {}).values() if v) / len(model_behaviors) if model_behaviors else 1.0
+        behavior_recall = sum(1 for v in judgments.get("behavior_recall", {}).values() if v) / len(golden_behaviors) if golden_behaviors else 1.0
 
-    end_time = time.monotonic()
+        judge_scores = {
+            "summary_rating": judgments.get("summary_rating", 0),
+            "liability_rating": judgments.get("liability_rating", 0),
+            "damage_precision": damage_precision,
+            "damage_recall": damage_recall,
+            "behavior_precision": behavior_precision,
+            "behavior_recall": behavior_recall
+        }
 
-    # --- Step 6: Calculate Judge Performance ---
-    judge_input_tokens = len(tokenizer.encode(combined_prompt))
-    judge_output_tokens = len(tokenizer.encode(response.text))
-    judge_cost = calculate_cost(judge_model_name, judge_input_tokens, judge_output_tokens)
-    judge_latency = end_time - start_time
+        end_time = time.monotonic()
 
-    judge_performance = {
-        "latency": judge_latency,
-        "estimated_cost": judge_cost,
-        "input_tokens": judge_input_tokens,
-        "output_tokens": judge_output_tokens
-    }
+        judge_input_tokens = len(tokenizer.encode(prompt))
+        judge_output_tokens = len(tokenizer.encode(response.text))
+        judge_cost = calculate_cost(judge_model_name, judge_input_tokens, judge_output_tokens)
+        judge_latency = end_time - start_time
 
-    # --- Step 7: Assemble the final scorecard ---
-    scorecard = {
-        "categorical_f1": f1,
-        "summary_bleu": summary_scores["bleu"],
-        "summary_meteor": summary_scores["meteor"],
-        "liability_bleu": liability_scores["bleu"],
-        "liability_meteor": liability_scores["meteor"],
-        "trace_precision": trace_precision,
-        "trace_recall": trace_recall,
-        "behavior_precision": behavior_precision,
-        "behavior_recall": behavior_recall
-    }
+        judge_performance = {
+            "latency": judge_latency,
+            "estimated_cost": judge_cost,
+            "input_tokens": judge_input_tokens,
+            "output_tokens": judge_output_tokens
+        }
 
-    return scorecard, judge_performance
+        return judge_scores, judge_performance
+    except (IndexError, json.JSONDecodeError, Exception):
+        return { "summary_rating": 0, "liability_rating": 0, "damage_precision": 0, "damage_recall": 0, "behavior_precision": 0, "behavior_recall": 0 }, None

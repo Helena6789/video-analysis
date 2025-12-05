@@ -8,7 +8,7 @@ from analyzers.mock_analyzer import MockVLMAnalyzer
 from analyzers.gemini_analyzer import GeminiProAnalyzer
 from core.analyzers import AccidentAnalyzer
 from core.schemas import AnalysisResult
-from core.evaluation import evaluate_accuracy
+from core.evaluation import evaluate_sync_metrics, evaluate_llm_judge_metrics_async
 
 # Load environment variables
 load_dotenv()
@@ -29,51 +29,30 @@ ANALYZER_CATALOG = {
 
 # --- UI Rendering Functions ---
 
-def display_accuracy_scorecard(scorecard):
-    """Renders the accuracy scorecard metrics."""
+def display_accuracy_scorecard(sync_scores, judge_scores):
+    """Renders the full, two-part accuracy scorecard."""
     st.markdown("##### 🎯 Accuracy Scorecard")
 
-    # Main metrics
-    sc_col1, sc_col2, sc_col3 = st.columns(3)
-    sc_col1.metric(
-        "Categorical F1-Score",
-        f"{scorecard['categorical_f1']:.2f}",
-        help="Measures the accuracy of structured fields like weather, time of day, etc. (F1-Score)"
-    )
-    sc_col2.metric(
-        "Summary Quality (BLEU)",
-        f"{scorecard['summary_bleu']:.2f}",
-        help="Measures how much the model's summary overlaps with the ground truth summary. (BLEU Score)"
-    )
-    sc_col3.metric(
-        "Liability Match (METEOR)",
-        f"{scorecard['liability_meteor']:.2f}",
-        help="Measures the semantic similarity of the model's liability assessment to the ground truth. (METEOR Score)"
-    )
+    # --- Part 1: Objective Metrics ---
+    st.markdown("###### Objective Metrics (Word & Phrase Matching)")
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    col1.metric("Struct. F1", f"{sync_scores['categorical_f1']:.2f}", help="F1-Score for structured fields like weather, time of day, etc.")
+    col2.metric("Injury Score", f"{sync_scores['injury_score']:.2f}", help="Hybrid score for injury classification and justification.")
+    col3.metric("Summary (BLEU)", f"{sync_scores['summary_bleu']:.2f}", help="Phrase overlap for the summary.")
+    col4.metric("Summary (METEOR)", f"{sync_scores['summary_meteor']:.2f}", help="Semantic similarity for the summary.")
+    col5.metric("Liability (BLEU)", f"{sync_scores['liability_bleu']:.2f}", help="Phrase overlap for the liability statement.")
+    col6.metric("Liability (METEOR)", f"{sync_scores['liability_meteor']:.2f}", help="Semantic similarity for the liability statement.")
 
-    # List metrics in a more compact form
-    st.markdown("###### List Field Accuracy")
-    list_col1, list_col2, list_col3, list_col4 = st.columns(4)
-    list_col1.metric(
-        "Trace Precision",
-        f"{scorecard['trace_precision']:.2f}",
-        help="Of the reasoning steps the model provided, what percentage were semantically similar to the ground truth?"
-    )
-    list_col2.metric(
-        "Trace Recall",
-        f"{scorecard['trace_recall']:.2f}",
-        help="Of the essential reasoning steps in the ground truth, what percentage did the model capture?"
-    )
-    list_col3.metric(
-        "Behavior Precision",
-        f"{scorecard['behavior_precision']:.2f}",
-        help="Of the driver behaviors the model flagged, what percentage were relevant?"
-    )
-    list_col4.metric(
-        "Behavior Recall",
-        f"{scorecard['behavior_recall']:.2f}",
-        help="Of the essential driver behaviors in the ground truth, what percentage did the model find?"
-    )
+    # --- Part 2: LLM Judge Ratings ---
+    st.markdown("###### Intelligent Ratings (LLM as a Judge)")
+    jcol1, jcol2, jcol3, jcol4, jcol5, jcol6 = st.columns(6)
+    jcol1.metric("Summary (1-100)", f"{judge_scores['summary_rating']}", help="Judge's score for summary accuracy.")
+    jcol2.metric("Liability (1-100)", f"{judge_scores['liability_rating']}", help="Judge's score for the liability assessment.")
+    jcol3.metric("Damage Precision", f"{judge_scores['damage_precision']:.2f}", help="Judge's score for damage description relevance (Precision).")
+    jcol4.metric("Damage Recall", f"{judge_scores['damage_recall']:.2f}", help="Judge's score for damage description completeness (Recall).")
+    jcol5.metric("Behavior Precision", f"{judge_scores['behavior_precision']:.2f}", help="Judge's score for behavior flag relevance (Precision).")
+    jcol6.metric("Behavior Recall", f"{judge_scores['behavior_recall']:.2f}", help="Judge's score for behavior flag completeness (Recall).")
+
     st.markdown("---")
 
 def display_performance_metrics(performance, judge_performance):
@@ -166,9 +145,10 @@ def display_analysis_dashboard(result: AnalysisResult):
 # --- Backend Logic ---
 
 def get_analyzer(model_name: str) -> AccidentAnalyzer:
-    # ... (This function remains the same)
+    """Factory function to get an analyzer instance."""
     analyzer_class, kwargs = ANALYZER_CATALOG.get(model_name, (None, {}))
     if analyzer_class:
+        # Check for API key if a Gemini model is selected
         if issubclass(analyzer_class, GeminiProAnalyzer) and not os.getenv("GEMINI_API_KEY"):
             st.error("GEMINI_API_KEY not found. Please create a .env file with your key.")
             st.stop()
@@ -176,23 +156,27 @@ def get_analyzer(model_name: str) -> AccidentAnalyzer:
     raise ValueError("Invalid analyzer selected")
 
 async def run_analysis_async(selected_models: list, video_path: str, status):
-    # ... (This function remains the same)
+    """Runs the analysis for all selected models concurrently and processes them as they complete."""
     results = {}
     gemini_models = {m for m in selected_models if m.startswith("Gemini")}
-    other_models = {m for m in selected_models if not m.startswith("Gemini")}
     uploaded_video_file = None
+
     def log_message(message):
         timestamp = datetime.now().strftime('%H:%M:%S')
-        status.write(f"[{timestamp}] {message}")
+        status.write(f"`[{timestamp}]` {message}")
+
     def log_success(message):
         timestamp = datetime.now().strftime('%H:%M:%S')
-        status.markdown(f"<p style='color:green;'>[{timestamp}] {message}</p>", unsafe_allow_html=True)
+        status.markdown(f"`[{timestamp}]` <span style='color:green;'>{message}</span>", unsafe_allow_html=True)
+
     async def run_and_tag(model_name, coro):
+        """Wrapper to run a coroutine and tag its result with the model name."""
         try:
             result = await coro
             return model_name, result, None
         except Exception as e:
             return model_name, None, e
+
     try:
         tasks = []
         if gemini_models:
@@ -209,6 +193,7 @@ async def run_analysis_async(selected_models: list, video_path: str, status):
             else:
                 coro = analyzer.analyze_video(video_path)
             tasks.append(run_and_tag(model_name, coro))
+
         log_message(f"Running {len(tasks)} tasks in parallel...")
         for future in asyncio.as_completed(tasks):
             model_name, result_tuple, error = await future
@@ -285,13 +270,19 @@ async def main():
 
                         if isinstance(result, AnalysisResult):
                             display_analysis_dashboard(result)
-                            judge_performance = None
-                            if golden_data:
-                                with st.spinner(f"Evaluating accuracy for {model_name} with {judge_model}..."):
-                                    scorecard, judge_performance = await evaluate_accuracy(result, golden_data, judge_model)
 
-                                display_performance_metrics(performance, judge_performance)
-                                display_accuracy_scorecard(scorecard)
+                            judge_scores = None
+                            judge_performance = None
+
+                            if golden_data:
+                                # Run both evaluations
+                                sync_scores = evaluate_sync_metrics(result, golden_data)
+                                with st.spinner(f"Getting LLM Judge ratings for {model_name}..."):
+                                    judge_scores, judge_performance = await evaluate_llm_judge_metrics_async(result, golden_data, judge_model)
+
+                                display_accuracy_scorecard(sync_scores, judge_scores)
+
+                            display_performance_metrics(performance, judge_performance)
                         else:
                             # Display error or info message
                             st.error(f"Could not generate a report for {model_name}.")

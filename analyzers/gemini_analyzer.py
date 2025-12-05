@@ -70,13 +70,13 @@ class GeminiProAnalyzer(AccidentAnalyzer):
             video_tokens = int(video_duration * TOTAL_INPUT_TOKENS_PER_SECOND)
             prompt_tokens = len(tokenizer.encode(prompt))
             input_tokens = video_tokens + prompt_tokens
-            
+
             # 3. Output Tokens & Cost
             output_tokens = len(tokenizer.encode(raw_response_text))
-            
+
             # 4. Total Cost
             total_cost = calculate_cost(self.model_name, input_tokens, output_tokens)
-            
+
             performance = {
                 "latency": latency,
                 "estimated_cost": total_cost,
@@ -154,7 +154,7 @@ class GeminiProAnalyzer(AccidentAnalyzer):
           }},
           "collision_type": "Standard insurance term, e.g., 'Rear-End', 'T-Bone', or 'Unknown'",
           "traffic_controls_present": ["List of traffic controls observed. If none, return an empty list []"],
-          "injury_risk": "An assessment of the potential for occupant injury (e.g., 'Low', 'Medium', 'High', 'Unknown').",
+          "injury_risk": "An assessment of the potential for occupant injury (e.g., 'Low', 'Medium', 'High', 'Unknown')",
           "recommended_action": "Next steps for the claims adjuster. If no specific action, state 'Standard procedure'.",
           "reasoning_trace": [
             "A step-by-step log of key frames or events. If the video is unclear, provide a trace explaining why."
