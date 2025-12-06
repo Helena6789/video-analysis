@@ -1,0 +1,4 @@
+driver_id,driver_name,vehicle_vin,claim_date,claim_type,fault_status
+D-101,John Doe,...456,2023-05-15,Rear-End,At Fault
+D-102,Jane Smith,...123,2024-01-20,Sideswipe,Not At Fault
+D-101,John Doe,...456,2024-11-10,Rear-End,At Fault

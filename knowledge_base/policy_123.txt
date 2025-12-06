@@ -1,0 +1,13 @@
+**Standard Auto Insurance Policy: #POL-12345**
+
+**Section 1: Covered Vehicles**
+- 2022 White SUV (VIN: ...123)
+- 2021 Blue Sedan (VIN: ...456)
+
+**Section 2: Liability Coverage**
+- 2.1: Bodily injury and property damage to others resulting from a collision where the insured driver is at fault is covered. This includes rear-end collisions, sideswipes, and intersection-related faults.
+- 2.2: Incidents resulting from illegal activities (e.g., street racing) are excluded.
+- 2.3: Intentional damage is excluded.
+
+**Section 3: Collision Coverage**
+- 3.1: Damage to the insured's vehicle from a collision is covered, subject to a $500 deductible.

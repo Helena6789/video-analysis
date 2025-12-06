@@ -10,6 +10,7 @@ from core.analyzers import AccidentAnalyzer
 from core.schemas import AnalysisResult
 from core.evaluation import evaluate_sync_metrics, evaluate_llm_judge_metrics_async
 from core.exporter import create_pdf_report
+from core.agent import run_claims_assistant_agent
 
 # Load environment variables
 load_dotenv()
@@ -33,6 +34,10 @@ st.markdown("""
     }
     .stDownloadButton>button {
         background-color: #4CAF50; /* Green */
+        color: white;
+    }
+    .ai-assistant-button button {
+        background-color: #8A2BE2; /* BlueViolet */
         color: white;
     }
     </style>
@@ -128,58 +133,60 @@ def display_analysis_dashboard(result: AnalysisResult):
     st.subheader(f"Dashboard")
 
     # --- Top Level Metrics ---
-    st.markdown("##### 🚩 Key Flags")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        # Correctly access injury_risk from the human_factors object
-        if "high" in result.human_factors.injury_risk.lower():
-            st.error(f"**Injury Risk:** {result.human_factors.injury_risk}")
-        elif "medium" in result.human_factors.injury_risk.lower():
-            st.warning(f"**Injury Risk:** {result.human_factors.injury_risk}")
-        else:
-            st.info(f"**Injury Risk:** {result.human_factors.injury_risk}")
-    with col2:
-        # Format the new liability object into a readable string
-        st.warning(f"**At-Fault Party:** Color: {result.liability_indicator.color}, Type: {result.liability_indicator.type}")
-    with col3:
-        st.info(f"**Collision Type:** {result.collision_type}")
+    with st.container(border=True):
+        st.markdown("##### 🚩 Key Flags")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            # Correctly access injury_risk from the human_factors object
+            if "high" in result.human_factors.injury_risk.lower():
+                st.error(f"**Injury Risk:** {result.human_factors.injury_risk}")
+            elif "medium" in result.human_factors.injury_risk.lower():
+                st.warning(f"**Injury Risk:** {result.human_factors.injury_risk}")
+            else:
+                st.info(f"**Injury Risk:** {result.human_factors.injury_risk}")
+        with col2:
+            # Format the new liability object into a readable string
+            st.warning(f"**At-Fault Party:** Color: {result.liability_indicator.color}, Type: {result.liability_indicator.type}")
+        with col3:
+            st.info(f"**Collision Type:** {result.collision_type}")
 
-    st.markdown("---")
+    with st.container(border=True):
+      st.markdown("##### 📋 Summary & Actions")
+      st.markdown(f"**Summary:** {result.accident_summary}")
+      st.markdown(f"**Liability Reasoning:** {result.liability_indicator.driver_major_behavior}")
+      st.markdown(f"**Recommended Action:** {result.recommended_action}")
 
     # --- Detailed Sections ---
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown("##### 🌎 Environmental Conditions")
-        st.markdown(f"**- Time of Day:** {result.environmental_conditions.time_of_day}")
-        st.markdown(f"**- Weather:** {result.environmental_conditions.weather}")
-        st.markdown(f"**- Road Conditions:** {result.environmental_conditions.road_conditions}")
-        st.markdown(f"**- Location Type:** {result.environmental_conditions.location_type}")
-        st.markdown(f"**- Traffic Controls:** {', '.join(result.traffic_controls_present)}")
+    with st.container(border=True):
+      c1, c2 = st.columns(2)
+      with c1:
+          st.markdown("##### 🌎 Environmental Conditions")
+          st.markdown(f"**- Time of Day:** {result.environmental_conditions.time_of_day}")
+          st.markdown(f"**- Weather:** {result.environmental_conditions.weather}")
+          st.markdown(f"**- Road Conditions:** {result.environmental_conditions.road_conditions}")
+          st.markdown(f"**- Location Type:** {result.environmental_conditions.location_type}")
+          st.markdown(f"**- Traffic Controls:** {', '.join(result.traffic_controls_present)}")
 
-    with c2:
-        st.markdown("##### 👨‍👩‍👧 Human Factors")
-        st.markdown(f"**- Pedestrians Involved:** {result.human_factors.pedestrians_involved}")
-        st.markdown(f"**- Potential Witnesses:** {result.human_factors.potential_witnesses}")
-        st.markdown(f"**- Injury Risk:** {result.human_factors.injury_risk}")
+      with c2:
+          st.markdown("##### 👨‍👩‍👧 Human Factors")
+          st.markdown(f"**- Pedestrians Involved:** {result.human_factors.pedestrians_involved}")
+          st.markdown(f"**- Potential Witnesses:** {result.human_factors.potential_witnesses}")
+          st.markdown(f"**- Injury Risk:** {result.human_factors.injury_risk}")
+
+    with st.container(border=True):
+      st.markdown("##### 🚗 Vehicles Involved")
+      for vehicle in result.vehicles_involved:
+          st.markdown(f"- **{vehicle.color} {vehicle.type}:** {vehicle.damage_level} damage to the {vehicle.damage_direction}.")
+
+      # --- Raw Data/Reasoning ---
+      with st.expander("Show System Reasoning & Raw Data"):
+          st.markdown("###### Reasoning Trace")
+          for step in result.reasoning_trace:
+              st.markdown(f"- {step}")
+          st.markdown("###### Raw JSON Output")
+          st.json(result.model_dump_json(indent=4))
 
     st.markdown("---")
-
-    st.markdown("##### 📋 Summary & Actions")
-    st.markdown(f"**Summary:** {result.accident_summary}")
-    st.markdown(f"**Liability Reasoning:** {result.liability_indicator.driver_major_behavior}")
-    st.markdown(f"**Recommended Action:** {result.recommended_action}")
-
-    st.markdown("##### 🚗 Vehicles Involved")
-    for vehicle in result.vehicles_involved:
-        st.markdown(f"- **{vehicle.color} {vehicle.type}:** {vehicle.damage_level} damage to the {vehicle.damage_direction}.")
-
-    # --- Raw Data/Reasoning ---
-    with st.expander("Show System Reasoning & Raw Data"):
-        st.markdown("###### Reasoning Trace")
-        for step in result.reasoning_trace:
-            st.markdown(f"- {step}")
-        st.markdown("###### Raw JSON Output")
-        st.json(result.model_dump_json(indent=4))
 
 # --- Backend Logic ---
 def log_message(status, message):
@@ -393,6 +400,33 @@ async def run_new_analysis_ui():
                     status.update(label="All tasks complete!", state="complete")
                     st.rerun()
 
+async def display_ai_assistant_ui(result, model_name, judge_model):
+    """Renders the UI for the AI Claims Assistant."""
+    st.markdown('<div class="ai-assistant-button">', unsafe_allow_html=True)
+    run_button = st.button("🤖 Run AI Claims Assistant", key=f"agent_button_{model_name}", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    if run_button:
+        with st.spinner(f"AI Claims Assistant is thinking based on {model_name}'s output..."):
+            thought_process, final_result = await run_claims_assistant_agent(result, judge_model)
+            
+            st.markdown("##### 🤖 AI Claims Assistant Results")
+            
+            if "High" in final_result.get("fraud_risk_assessment", ""):
+                st.error(f"**Fraud Risk:** {final_result['fraud_risk_assessment']}")
+            elif "Medium" in final_result.get("fraud_risk_assessment", ""):
+                st.warning(f"**Fraud Risk:** {final_result['fraud_risk_assessment']}")
+            else:
+                st.info(f"**Fraud Risk:** {final_result.get('fraud_risk_assessment', 'Unknown')}")
+            
+            st.markdown(f"**Justification:** {final_result.get('fraud_risk_justification', 'N/A')}")
+            st.success(f"**Augmented Recommendation:** {final_result.get('augmented_recommendation', 'N/A')}")
+
+            with st.expander("Show Agent's Thought Process"):
+                for thought in thought_process:
+                    st.markdown(thought)
+            st.markdown("---")
+
 async def display_results_ui(results_data, judge_model):
     """Renders the results from a saved report or a new analysis."""
     st.header("Analysis Comparison")
@@ -423,8 +457,8 @@ async def display_results_ui(results_data, judge_model):
                 judge_performance = model_data.get("judge_performance")
 
                 # --- Display main results immediately ---
-                display_performance_metrics(performance, judge_performance)
                 display_analysis_dashboard(result)
+                display_performance_metrics(performance, judge_performance)
 
                 # --- Handle Accuracy Evaluation ---
                 # If scores are already saved in the report, just display them
@@ -452,8 +486,12 @@ async def display_results_ui(results_data, judge_model):
 
                             # Rerun to update the UI with the new scores and performance
                             st.rerun()
+
+                # Run assistant
+                await display_ai_assistant_ui(result, model_name, judge_model)
             else:
                 st.error(f"Could not generate a report for {model_name}.")
+                st.code(str(result), language=None)
                 st.code(str(performance), language=None)
 
 
