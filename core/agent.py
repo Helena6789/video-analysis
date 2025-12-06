@@ -1,31 +1,34 @@
 # core/agent.py
 import pandas as pd
-import google.generativeai as genai
-import asyncio
 import json
+from typing import TypedDict, Annotated, List
+from langchain_core.tools import tool
+from langchain_core.messages import BaseMessage, ToolMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langgraph.graph import StateGraph, END
+from langgraph.prebuilt import ToolNode
 
-# --- RAG Tools ---
+# --- Tool Definitions ---
 
-def policy_lookup_tool(collision_type: str, at_fault_party: str) -> str:
+@tool
+def policy_lookup_tool(collision_type: str) -> str:
     """
-    Searches a dummy policy document to see if the incident is covered.
-    In a real app, this would query a database or a vector store.
+    Searches the policy document to determine if a specific collision_type is covered.
     """
     try:
         with open("knowledge_base/policy_123.txt", "r") as f:
             policy_text = f.read()
-        
-        # Simple string search for demonstration
         if collision_type.lower() in policy_text.lower() and "is covered" in policy_text.lower():
-            return f"Finding: The policy document confirms that '{collision_type}' collisions are covered under the liability section."
+            return f"Finding: The policy document confirms that '{collision_type}' collisions are covered."
         else:
             return f"Finding: Could not confirm coverage for '{collision_type}' in the policy document."
     except FileNotFoundError:
         return "Error: Policy document not found."
 
+@tool
 def claims_history_tool(at_fault_driver_name: str, collision_type: str) -> str:
     """
-    Searches a dummy CSV to see if the at-fault driver has a history of similar claims.
+    Searches the claims history CSV to find prior at-fault claims for a specific driver and collision type.
     """
     try:
         history_df = pd.read_csv("knowledge_base/claims_history.csv")
@@ -34,7 +37,6 @@ def claims_history_tool(at_fault_driver_name: str, collision_type: str) -> str:
             (history_df['claim_type'] == collision_type) &
             (history_df['fault_status'] == 'At Fault')
         ]
-        
         num_prior_claims = len(driver_claims)
         if num_prior_claims > 0:
             return f"Finding: Found {num_prior_claims} prior at-fault claim(s) of type '{collision_type}' for driver '{at_fault_driver_name}'."
@@ -43,68 +45,54 @@ def claims_history_tool(at_fault_driver_name: str, collision_type: str) -> str:
     except FileNotFoundError:
         return "Error: Claims history file not found."
 
-# --- Agentic Logic ---
+# --- Agent State Definition (Simplified) ---
 
-async def run_claims_assistant_agent(analysis_result, agent_model_name: str):
-    """
-    Runs a simulated agentic workflow to enrich the VLM analysis.
-    """
-    thought_process = []
-    
-    agent_model = genai.GenerativeModel(agent_model_name)
-    
-    # --- Step 1: Initial thought based on VLM data ---
-    initial_prompt = f"""
-    You are an AI Claims Assistant. You have just received a structured analysis of a car accident video.
-    Your goal is to enrich this data using your available tools and provide a final, augmented recommendation.
+class AgentState(TypedDict):
+    messages: Annotated[List[BaseMessage], lambda x, y: x + y]
 
-    **VLM Analysis:**
-    - Collision Type: {analysis_result.collision_type}
-    - At-Fault Party: {analysis_result.liability_indicator.color} {analysis_result.liability_indicator.type}
-    - At-Fault Behavior: {analysis_result.liability_indicator.driver_major_behavior}
+# --- LLM and Tool Definitions ---
+tools = [policy_lookup_tool, claims_history_tool]
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+llm_with_tools = llm.bind_tools(tools)
 
-    **Available Tools:**
-    - `policy_lookup_tool(collision_type, at_fault_party)`
-    - `claims_history_tool(at_fault_driver_name, collision_type)`
+# --- Graph Nodes ---
 
-    Based on the VLM analysis, what is the first tool you should use and what are the exact parameters?
-    Respond in a JSON format like: {{\"tool_name\": \"tool_name\", \"parameters\": {{\"param1\": \"value1\"}}}}
-    """
-    
-    thought_process.append("1. **Initial Thought:** Based on the VLM data, I need to check if the policy covers this type of incident.")
-    
-    # --- Step 2: Use the Policy Lookup Tool ---
-    # (In a real agent, the LLM would choose this. Here we simulate the choice for simplicity.)
-    tool_call_result = policy_lookup_tool(analysis_result.collision_type, "at_fault_party")
-    thought_process.append(f"2. **Tool Call:** `policy_lookup_tool()`\n   **Result:** {tool_call_result}")
+def agent_node(state: AgentState):
+    """The node that uses the LLM to decide the next step or to synthesize the final answer."""
+    response = llm_with_tools.invoke(state["messages"])
+    return {"messages": [response]}
 
-    # --- Step 3: Use the Claims History Tool ---
-    # (Simulating the agent's next logical step)
-    # For the demo, we'll assume the at-fault driver of the blue sedan is "John Doe"
-    at_fault_driver = "John Doe" if "blue" in analysis_result.liability_indicator.color.lower() else "Jane Smith"
-    
-    history_call_result = claims_history_tool(at_fault_driver, analysis_result.collision_type)
-    thought_process.append(f"3. **Tool Call:** `claims_history_tool(at_fault_driver_name='{at_fault_driver}')`\n   **Result:** {history_call_result}")
+def tool_node(state: AgentState):
+    """This runs the tools and returns the results."""
+    tool_calls = state["messages"][-1].tool_calls
+    tool_messages = []
+    for tool_call in tool_calls:
+        tool_output = tools[tool_call["name"]].invoke(tool_call["args"])
+        tool_messages.append(ToolMessage(content=str(tool_output), tool_call_id=tool_call["id"]))
+    return {"messages": tool_messages}
 
-    # --- Step 4: Final Synthesis ---
-    final_prompt = f"""
-    You are an AI Claims Assistant. You have the following information:
-    1.  **VLM Analysis:** Collision was a '{analysis_result.collision_type}'. The at-fault party was the '{analysis_result.liability_indicator.color} {analysis_result.liability_indicator.type}' due to '{analysis_result.liability_indicator.driver_major_behavior}'.
-    2.  **Policy Check:** {tool_call_result}
-    3.  **Claims History Check:** {history_call_result}
+# --- Conditional Edges & Graph Definition ---
 
-    Based on ALL of this information, generate a final "Augmented Recommendation" and a "Fraud Risk Assessment".
-    The fraud risk should be "Low", "Medium", or "High" with a brief justification.
-    Respond in a single JSON object: {{\"augmented_recommendation\": \"...\", \"fraud_risk_assessment\": \"...\", \"fraud_risk_justification\": \"...\"}}
-    """
-    
-    thought_process.append("4. **Final Synthesis:** Combining all information to generate the final recommendation and fraud risk.")
-    
-    response = await asyncio.to_thread(agent_model.generate_content, final_prompt)
-    try:
-        json_part = response.text.split('```json')[1].split('```')[0]
-        final_result = json.loads(json_part)
-    except (IndexError, json.JSONDecodeError):
-        final_result = {"augmented_recommendation": "Could not generate final result.", "fraud_risk_assessment": "Error"}
+def router(state: AgentState):
+    """The router function that directs the graph flow."""
+    if state["messages"][-1].tool_calls:
+        return "tool_node"
+    else:
+        return "END"
 
-    return thought_process, final_result
+# --- Build the Graph ---
+graph = StateGraph(AgentState)
+graph.add_node("agent", agent_node)
+graph.add_node("tool_node", tool_node)
+
+graph.set_entry_point("agent")
+
+graph.add_conditional_edges(
+    "agent",
+    router,
+    {"tool_node": "tool_node", "END": END}
+)
+graph.add_edge("tool_node", "agent")
+
+# Compile the graph into a runnable app
+app = graph.compile()
