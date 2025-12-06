@@ -6,6 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from analyzers.mock_analyzer import MockVLMAnalyzer
 from analyzers.gemini_analyzer import GeminiProAnalyzer
+from analyzers.openrouter_analyzer import OpenRouterAnalyzer
 from core.analyzers import AccidentAnalyzer
 from core.schemas import AnalysisResult
 from core.evaluation import evaluate_sync_metrics, evaluate_llm_judge_metrics_async
@@ -48,6 +49,7 @@ ANALYZER_CATALOG = {
     "Mock VLM (Demo)": (MockVLMAnalyzer, {}),
     "Gemini 3 Pro (Preview)": (GeminiProAnalyzer, {"model_name": "gemini-3-pro-preview"}),
     "Gemini 2.5 Pro": (GeminiProAnalyzer, {"model_name": "gemini-2.5-pro"}),
+    "Nemotron Nano 12B 2 VL": (OpenRouterAnalyzer, {"model_name": "nvidia/nemotron-nano-12b-v2-vl:free"}),
 }
 
 # --- UI Rendering Functions ---
@@ -201,9 +203,12 @@ def get_analyzer(model_name: str) -> AccidentAnalyzer:
     """Factory function to get an analyzer instance."""
     analyzer_class, kwargs = ANALYZER_CATALOG.get(model_name, (None, {}))
     if analyzer_class:
-        # Check for API key if a Gemini model is selected
+        # Check for API key
         if issubclass(analyzer_class, GeminiProAnalyzer) and not os.getenv("GEMINI_API_KEY"):
             st.error("GEMINI_API_KEY not found. Please create a .env file with your key.")
+            st.stop()
+        if issubclass(analyzer_class, OpenRouterAnalyzer) and not os.getenv("OPENROUTER_API_KEY"):
+            st.error("OPENROUTER_API_KEY not found. Please create a .env file with your key.")
             st.stop()
         return analyzer_class(**kwargs)
     raise ValueError("Invalid analyzer selected")
@@ -265,8 +270,6 @@ async def main():
     col1, col2 = st.columns([0.8, 0.2])
     with col1:
         st.title("🚗 VLM Accident Analysis Prototype")
-
-    # The export button will be placed in col2 later if results exist
 
     # --- Sidebar ---
     with st.sidebar:
@@ -509,7 +512,7 @@ async def display_results_ui(results_data, judge_model):
                 await display_ai_assistant_ui(result, model_name)
             else:
                 st.error(f"Could not generate a report for {model_name}.")
-                st.code(str(result), language=None)
+                st.code(str(result_dict), language=None)
                 st.code(str(performance), language=None)
 
 

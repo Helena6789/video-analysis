@@ -6,9 +6,9 @@ moviepy
 tiktoken
 scikit-learn
 nltk
-fpdf2
 langchain
 langgraph
 langchain-google-genai
 Jinja2
 WeasyPrint
+langchain-openai

@@ -2,6 +2,7 @@
 import json
 import asyncio
 import time
+import os
 from sklearn.metrics import f1_score
 from nltk.translate.bleu_score import sentence_bleu
 from nltk.translate.meteor_score import meteor_score
@@ -12,7 +13,8 @@ import google.generativeai as genai
 import tiktoken
 
 from core.schemas import AnalysisResult
-from .pricing import calculate_cost
+from core.pricing import calculate_cost
+from utils.common import clean_response
 
 # Ensure NLTK data is available.
 try:
@@ -148,6 +150,10 @@ async def evaluate_llm_judge_metrics_async(model_result: AnalysisResult, golden_
     """Uses a single LLM call to get a 1-100 rating for the accident summary."""
 
     start_time = time.monotonic()
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY not found in environment variables.")
+    genai.configure(api_key=api_key)
     judge_model = genai.GenerativeModel(judge_model_name)
 
     prompt = f"""
@@ -173,7 +179,7 @@ async def evaluate_llm_judge_metrics_async(model_result: AnalysisResult, golden_
 
     try:
         response = await asyncio.to_thread(judge_model.generate_content, prompt)
-        json_part = response.text.split('```json')[1].split('```')[0]
+        json_part = clean_response(response.text)
         judgments = json.loads(json_part)
 
         end_time = time.monotonic()
@@ -191,5 +197,6 @@ async def evaluate_llm_judge_metrics_async(model_result: AnalysisResult, golden_
         }
 
         return judgments, judge_performance
-    except (IndexError, json.JSONDecodeError, Exception):
+    except (IndexError, json.JSONDecodeError, Exception) as e:
+        print(F"Model evaluation output validation failed for {judge_model_name}: {e}.")
         return { "summary_rating": 0 }, {}
