@@ -18,9 +18,11 @@ from .pricing import calculate_cost
 try:
     nltk.data.find('tokenizers/punkt')
     nltk.data.find('corpora/wordnet')
+    nltk.data.find('tokenizers/punkt_tab')
 except LookupError:
     nltk.download('punkt')
     nltk.download('wordnet')
+    nltk.download('punkt_tab')
 
 tokenizer = tiktoken.get_encoding("cl100k_base")
 

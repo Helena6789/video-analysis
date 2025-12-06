@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VLM Accident Analysis Report</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50; /* Dark Slate */
+            --accent-color: #3498db;  /* Professional Blue */
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #e1e4e8;
+        }
+
+        body {
+            font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        /* --- Header Section --- */
+        .report-header {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .report-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .meta-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .meta-pill {
+            background: #eff2f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+
+        /* --- Configuration Strip --- */
+        .config-strip {
+            font-size: 0.85em;
+            color: #555;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        /* --- Model Card Container --- */
+        .model-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .model-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        h3 {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #7f8c8d;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        
+        h3:first-of-type { margin-top: 0; }
+
+        /* --- Refactored Compact Table (The specific request) --- */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: #f8f9fa;
+            color: #666;
+            font-weight: 600;
+            width: 20%;
+        }
+
+        .data-table td {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        /* Special styling for metrics row to save space */
+        .metrics-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            justify-content: space-between;
+        }
+
+        .metric-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metric-label {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            color: #777;
+        }
+
+        .metric-value {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        /* --- Analysis Grid --- */
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 30px;
+        }
+
+        .info-group {
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: #555;
+            display: block;
+            margin-bottom: 3px;
+            font-size: 0.85em;
+        }
+
+        .info-value {
+            color: #222;
+        }
+
+        /* --- Vehicle List --- */
+        .vehicle-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .vehicle-item {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #95a5a6;
+        }
+
+        .agent-box {
+            background-color: #e8f4fc;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px dashed var(--accent-color);
+            color: #2c3e50;
+        }
+
+        /* Status Badge Logic */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            background-color: #eee;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="report-header">
+        <div>
+            <h1>VLM Accident Analysis Report</h1>
+            <div class="meta-info">
+                File: <strong>{{ video_filename }}</strong>
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <div class="meta-pill">ID: {{ report_id }}</div>
+            <div style="font-size: 0.8em; color: #888;">{{ generation_date }}</div>
+        </div>
+    </div>
+
+    <div class="config-strip">
+        <strong>Analyzed:</strong> {{ config.selected_models | join(', ') }} &nbsp;|&nbsp; 
+        <strong>Judge:</strong> {{ config.judge_model }}
+    </div>
+
+    {% for model_name, model_data in models.items() %}
+    <div class="model-card">
+        <div class="model-header">
+            {{ model_name }}
+        </div>
+
+        <div class="card-body">
+            {% if model_data.result %}
+                {% set result = model_data.result %}
+                {% set sync_scores = model_data.sync_scores %}
+                {% set judge_scores = model_data.judge_scores %}
+                {% set performance = model_data.performance %}
+                {% set judge_performance = model_data.judge_performance %}
+
+                <h3>Operational Metrics & Accuracy</h3>
+                <div class="metrics-row">
+                    <div class="metric-item">
+                        <span class="metric-label">Latency</span>
+                        <span class="metric-value">{{ "%.2f"|format(performance.latency + (judge_performance.latency if judge_performance else 0)) }}s</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Cost</span>
+                        <span class="metric-value">${{ "%.4f"|format(performance.estimated_cost + (judge_performance.estimated_cost if judge_performance else 0)) }}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Input Tok</span>
+                        <span class="metric-value">{{ "{:,}".format(performance.input_tokens + (judge_performance.input_tokens if judge_performance else 0)) }}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Output Tok</span>
+                        <span class="metric-value">{{ "{:,}".format(performance.output_tokens + (judge_performance.output_tokens if judge_performance else 0)) }}</span>
+                    </div>
+                    
+                    <div style="width: 1px; background: #ddd; margin: 0 10px;"></div>
+
+                    {% if sync_scores and judge_scores %}
+                    <div class="metric-item">
+                        <span class="metric-label">Environment</span>
+                        <span class="metric-value">{{ "%.2f"|format(sync_scores.environment_score) }}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Human Fac.</span>
+                        <span class="metric-value">{{ "%.2f"|format(sync_scores.human_factors_score) }}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Vehicle</span>
+                        <span class="metric-value">{{ "%.2f"|format(sync_scores.vehicle_score) }}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Liability</span>
+                        <span class="metric-value">{{ "%.2f"|format(sync_scores.liability_score) }}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Rating</span>
+                        <span class="metric-value">{{ judge_scores.summary_rating }}/10</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <h3>Analysis Dashboard</h3>
+                <div class="analysis-grid">
+                    <div>
+                        <div class="info-group">
+                            <span class="info-label">Accident Summary</span>
+                            <div class="info-value">{{ result.accident_summary }}</div>
+                        </div>
+                        <div class="info-group">
+                            <span class="info-label">Liability Reasoning</span>
+                            <div class="info-value">{{ result.liability_indicator.driver_major_behavior }}</div>
+                        </div>
+                        <div class="info-group">
+                            <span class="info-label">Recommended Action</span>
+                            <div class="info-value">{{ result.recommended_action }}</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <table class="data-table">
+                            <tr>
+                                <th>At-Fault</th>
+                                <td><span class="badge">{{ result.liability_indicator.color }} {{ result.liability_indicator.type }}</span></td>
+                            </tr>
+                            <tr>
+                                <th>Collision</th>
+                                <td>{{ result.collision_type }}</td>
+                            </tr>
+                            <tr>
+                                <th>Injury Risk</th>
+                                <td>{{ result.human_factors.injury_risk }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <h3>Vehicles Involved</h3>
+                <ul class="vehicle-list">
+                {% for vehicle in result.vehicles_involved %}
+                    <li class="vehicle-item">
+                        <strong>{{ vehicle.color }} {{ vehicle.type }}</strong> — {{ vehicle.damage_level }} damage to the {{ vehicle.damage_direction }}.
+                    </li>
+                {% endfor %}
+                </ul>
+                
+                {% if model_data.agent_results %}
+                <h3>AI Claims Assistant</h3>
+                <div class="agent-box">
+                    {{model_data.agent_results }}
+                </div>
+                {% endif %}
+
+            {% else %}
+                <div style="color: #e74c3c; padding: 20px; text-align: center; background: #fdf0f0; border-radius: 4px;">
+                    <strong>Analysis failed for this model.</strong>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>

@@ -10,3 +10,5 @@ fpdf2
 langchain
 langgraph
 langchain-google-genai
+Jinja2
+WeasyPrint

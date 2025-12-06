@@ -400,7 +400,7 @@ async def run_new_analysis_ui():
                     status.update(label="All tasks complete!", state="complete")
                     st.rerun()
 
-async def display_ai_assistant_ui(result, model_name, judge_model):
+async def display_ai_assistant_ui(result, model_name):
     """Renders the UI for the AI Claims Assistant."""
     st.markdown('<div class="ai-assistant-button">', unsafe_allow_html=True)
     run_button = st.button("🤖 Run AI Claims Assistant", key=f"agent_button_{model_name}", use_container_width=True)
@@ -434,8 +434,15 @@ async def display_ai_assistant_ui(result, model_name, judge_model):
             st.markdown("###### Final Results")
             final_content = final_state["messages"][-1].content
             st.markdown(final_content)
-            
-        st.markdown("---")
+
+            # --- Save Agent Results to Session State & Reports
+            st.session_state.results["models"][model_name]["agent_results"] = final_content
+            report_filename = f"{st.session_state.results['report_id']}.json"
+            with open(os.path.join("reports", report_filename), "w") as f:
+                json.dump(st.session_state.results, f, indent=4)
+            st.toast("Agent results save to report.")
+
+    st.markdown("---")
 
 
 async def display_results_ui(results_data, judge_model):
@@ -499,7 +506,7 @@ async def display_results_ui(results_data, judge_model):
                             st.rerun()
 
                 # Run assistant
-                await display_ai_assistant_ui(result, model_name, judge_model)
+                await display_ai_assistant_ui(result, model_name)
             else:
                 st.error(f"Could not generate a report for {model_name}.")
                 st.code(str(result), language=None)
