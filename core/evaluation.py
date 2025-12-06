@@ -7,6 +7,7 @@ from nltk.translate.bleu_score import sentence_bleu
 from nltk.translate.meteor_score import meteor_score
 from nltk.tokenize import word_tokenize
 import nltk
+import numpy as np
 import google.generativeai as genai
 import tiktoken
 
@@ -35,17 +36,30 @@ def _calculate_attribute_similarity(model_vehicle: dict, golden_vehicle: dict) -
             score += weight
     return score
 
-def evaluate_vehicle_score(model_vehicles: list, golden_vehicles: list) -> dict:
-    """Calculates precision and recall for the vehicles_involved list."""
-    if not golden_vehicles:
-        return {"precision": 1.0 if not model_vehicles else 0.0, "recall": 1.0}
-    if not model_vehicles:
-        return {"precision": 1.0, "recall": 0.0}
+def evaluate_vehicle_score(model_vehicles: list, golden_vehicles: list) -> float:
+    """
+    Calculates an 'Average Match Quality' score for the vehicles_involved list.
 
-    true_positives = 0
+    This logic iterates through each golden vehicle and finds its best semantic match
+    in the model's output. This approach implicitly handles vehicle count mismatches:
+    - If the model finds FEWER vehicles, the unmatched golden vehicles get a score of 0, lowering the average.
+    - If the model finds MORE vehicles, the extra (hallucinated) vehicles are ignored, not affecting the score.
+    """
+    if not golden_vehicles:
+        return 1.0 if not model_vehicles else 0.0
+    if not model_vehicles:
+        return 0.0
+
+    match_scores = []
     model_vehicles_copy = [v.model_dump() for v in model_vehicles]
 
+    # For each ground truth vehicle, find its best match in the model's predictions.
     for golden_vehicle in golden_vehicles:
+        if not model_vehicles_copy:
+            # The model has run out of vehicles to match, so this golden vehicle was missed.
+            match_scores.append(0)
+            continue
+
         best_match_score = -1
         best_match_index = -1
         for i, model_vehicle in enumerate(model_vehicles_copy):
@@ -54,13 +68,14 @@ def evaluate_vehicle_score(model_vehicles: list, golden_vehicles: list) -> dict:
                 best_match_score = score
                 best_match_index = i
 
-        if best_match_score >= 0.75:
-            true_positives += 1
+        match_scores.append(best_match_score)
+
+        # Remove the best match to prevent it from being matched to multiple golden vehicles.
+        if best_match_index != -1:
             model_vehicles_copy.pop(best_match_index)
 
-    precision = true_positives / len(model_vehicles)
-    recall = true_positives / len(golden_vehicles)
-    return {"precision": precision, "recall": recall}
+    # The final score is the average of the best-match scores for each golden vehicle.
+    return np.mean(match_scores) if match_scores else 0.0
 
 def evaluate_liability_score(model_liability, golden_liability: dict) -> float:
     """Calculates a weighted similarity score for the liability indicator."""
@@ -98,8 +113,8 @@ def evaluate_sync_metrics(model_result: AnalysisResult, golden_data: dict) -> di
     witness_score = 1.0 if hf_model.potential_witnesses.lower() == hf_golden["potential_witnesses"].lower() else 0.0
     human_factors_score = (0.6 * injury_score) + (0.3 * peds_score) + (0.1 * witness_score)
 
-    # --- Vehicle Score (Precision/Recall) ---
-    vehicle_scores = evaluate_vehicle_score(
+    # --- Vehicle Score (Average Match Quality) ---
+    vehicle_score = evaluate_vehicle_score(
         model_result.vehicles_involved,
         golden_data["vehicles_involved"]
     )
@@ -119,8 +134,7 @@ def evaluate_sync_metrics(model_result: AnalysisResult, golden_data: dict) -> di
     return {
         "environment_score": env_f1,
         "human_factors_score": human_factors_score,
-        "vehicle_precision": vehicle_scores["precision"],
-        "vehicle_recall": vehicle_scores["recall"],
+        "vehicle_score": vehicle_score,
         "liability_score": liability_score,
         "summary_bleu": summary_bleu,
         "summary_meteor": summary_meteor

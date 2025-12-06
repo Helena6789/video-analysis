@@ -52,7 +52,7 @@ def display_accuracy_scorecard(sync_scores, judge_scores):
     st.markdown("##### 🎯 Accuracy Scorecard")
 
     # --- Domain & Objective Scores ---
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4 = st.columns(4)
     col1.metric(
         "Environment (F1)",
         f"{sync_scores['environment_score']:.2f}",
@@ -64,16 +64,11 @@ def display_accuracy_scorecard(sync_scores, judge_scores):
         help="Weighted accuracy for injury_risk (60%), pedestrians_involved (30%), and potential_witnesses (10%)."
     )
     col3.metric(
-        "Vehicle Precision",
-        f"{sync_scores['vehicle_precision']:.2f}",
-        help="Of the vehicles the model identified, what percentage were correct? (Based on weighted attribute matching)."
+        "Vehicle Score",
+        f"{sync_scores['vehicle_score']:.2f}",
+        help="Average Match Quality for vehicle identification and attributes."
     )
     col4.metric(
-        "Vehicle Recall",
-        f"{sync_scores['vehicle_recall']:.2f}",
-        help="Of the vehicles in the ground truth, what percentage did the model correctly identify?"
-    )
-    col5.metric(
         "Liability Score",
         f"{sync_scores['liability_score']:.2f}",
         help="Weighted similarity for identifying the at-fault party, based on behavior (50%), color (25%), and type (25%)."
@@ -81,43 +76,50 @@ def display_accuracy_scorecard(sync_scores, judge_scores):
 
     # --- LLM Judge Rating ---
     st.markdown("###### Intelligent Summary Rating (LLM as a Judge)")
-    st.metric(
+    scol1, scol2, scol3 = st.columns(3)
+    scol1.metric(
         "Summary Rating (1-100)",
         f"{judge_scores['summary_rating']}",
         help="LLM Judge's score for the semantic accuracy and completeness of the accident summary."
     )
+    scol2.metric("Summary (BLEU)", f"{sync_scores['summary_bleu']:.2f}", help="Phrase overlap for the summary.")
+    scol3.metric("Summary (METEOR)", f"{sync_scores['summary_meteor']:.2f}", help="Semantic similarity for the summary.")
 
     st.markdown("---")
 
 def display_performance_metrics(performance, judge_performance):
-    """Renders the combined performance metrics."""
+    """Renders the combined performance metrics with a breakdown."""
     st.markdown("##### ⏱️ Performance")
 
     total_performance = performance.copy()
     if judge_performance:
         for key in total_performance:
-            total_performance[key] += judge_performance[key]
+            total_performance[key] += judge_performance.get(key, 0)
 
     p_col1, p_col2, p_col3, p_col4 = st.columns(4)
     p_col1.metric(
         "Total Latency (s)",
         f"{total_performance['latency']:.2f}",
-        help="Total time for analysis + accuracy evaluation."
+        delta=f"{judge_performance['latency']:.2f}s (Evaluate)" if judge_performance else None,
+        help="Main analysis latency + accuracy evaluation latency."
     )
     p_col2.metric(
         "Total Est. Cost ($)",
         f"{total_performance['estimated_cost']:.4f}",
-        help="Estimated cost for analysis + accuracy evaluation."
+        delta=f"{judge_performance['estimated_cost']:.4f}$ (Evaluate)" if judge_performance else None,
+        help="Main analysis cost + accuracy evaluation cost."
     )
     p_col3.metric(
         "Total Input Tokens",
         f"{total_performance['input_tokens']:,}",
-        help="Input tokens for analysis + accuracy evaluation."
+        delta=f"{judge_performance['input_tokens']:,} (Evaluate)" if judge_performance else None,
+        help="Main analysis tokens + accuracy evaluation tokens."
     )
     p_col4.metric(
         "Total Output Tokens",
         f"{total_performance['output_tokens']:,}",
-        help="Output tokens for analysis + accuracy evaluation."
+        delta=f"{judge_performance['output_tokens']:,} (Evaluate)" if judge_performance else None,
+        help="Main analysis tokens + accuracy evaluation tokens."
     )
     st.markdown("---")
 
