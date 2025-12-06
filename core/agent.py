@@ -1,6 +1,7 @@
 # core/agent.py
 import pandas as pd
 import json
+import os
 from typing import TypedDict, Annotated, List
 from langchain_core.tools import tool
 from langchain_core.messages import BaseMessage, ToolMessage
@@ -52,7 +53,8 @@ class AgentState(TypedDict):
 
 # --- LLM and Tool Definitions ---
 tools = [policy_lookup_tool, claims_history_tool]
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+tool_map = {tool.name : tool for tool in tools}
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.environ["GEMINI_API_KEY"], temperature=0)
 llm_with_tools = llm.bind_tools(tools)
 
 # --- Graph Nodes ---
@@ -67,7 +69,7 @@ def tool_node(state: AgentState):
     tool_calls = state["messages"][-1].tool_calls
     tool_messages = []
     for tool_call in tool_calls:
-        tool_output = tools[tool_call["name"]].invoke(tool_call["args"])
+        tool_output = tool_map[tool_call["name"]].invoke(tool_call["args"])
         tool_messages.append(ToolMessage(content=str(tool_output), tool_call_id=tool_call["id"]))
     return {"messages": tool_messages}
 

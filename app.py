@@ -413,33 +413,28 @@ async def display_ai_assistant_ui(result, model_name, judge_model):
             # Prepare the initial message for the agent
             initial_prompt = f"""
             You are an AI Claims Assistant. You have just received a structured analysis of a car accident video.
-            Your goal is to enrich this data using your available tools and provide a final, augmented recommendation.
+            Your goal is to enrich this data using your available tools and provide a final, augmented recommendation and fraud risk assessment.
 
             **VLM Analysis:**
             {json.dumps(result.model_dump(), indent=2)}
 
-            Based on this, what is the first logical step?
             """
             initial_state = {"messages": [("user", initial_prompt)]}
             
+            st.markdown("- **Running Too-Usering Agent...**")
             # Stream the graph execution
             for step in agent_app.stream(initial_state):
                 node_name = list(step.keys())[0]
                 # We don't need to show the full state, just the node name
                 st.markdown(f"- **Running Node:** `{node_name}`")
+                st.json(step[node_name], expanded=False)
                 final_state = step[node_name]
 
         if final_state:
             st.markdown("###### Final Results")
-            if "High" in final_state.get("fraud_risk", ""):
-                st.error(f"**Fraud Risk:** {final_state['fraud_risk']}")
-            elif "Medium" in final_state.get("fraud_risk", ""):
-                st.warning(f"**Fraud Risk:** {final_state['fraud_risk']}")
-            else:
-                st.info(f"**Fraud Risk:** {final_state.get('fraud_risk', 'Unknown')}")
+            final_content = final_state["messages"][-1].content
+            st.markdown(final_content)
             
-            st.markdown(f"**Justification:** {final_state.get('fraud_justification', 'N/A')}")
-            st.success(f"**Augmented Recommendation:** {final_state.get('final_recommendation', 'N/A')}")
         st.markdown("---")
 
 
