@@ -9,12 +9,12 @@ from nltk.translate.meteor_score import meteor_score
 from nltk.tokenize import word_tokenize
 import nltk
 import numpy as np
-import google.generativeai as genai
 import tiktoken
 
 from core.schemas import AnalysisResult
 from core.pricing import calculate_cost
 from utils.common import clean_response
+from utils.llm_client import get_llm_client
 
 # Ensure NLTK data is available.
 try:
@@ -150,11 +150,8 @@ async def evaluate_llm_judge_metrics_async(model_result: AnalysisResult, golden_
     """Uses a single LLM call to get a 1-100 rating for the accident summary."""
 
     start_time = time.monotonic()
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY not found in environment variables.")
-    genai.configure(api_key=api_key)
-    judge_model = genai.GenerativeModel(judge_model_name)
+
+    judge_model = get_llm_client(judge_model_name)
 
     prompt = f"""
     You are an AI assistant acting as an impartial judge. Your task is to evaluate the quality of a model's accident summary against a "golden" ground truth.
@@ -178,14 +175,14 @@ async def evaluate_llm_judge_metrics_async(model_result: AnalysisResult, golden_
     """
 
     try:
-        response = await asyncio.to_thread(judge_model.generate_content, prompt)
-        json_part = clean_response(response.text)
+        response_text = await asyncio.to_thread(judge_model.invoke, judge_model_name, prompt)
+        json_part = clean_response(response_text)
         judgments = json.loads(json_part)
 
         end_time = time.monotonic()
 
         judge_input_tokens = len(tokenizer.encode(prompt))
-        judge_output_tokens = len(tokenizer.encode(response.text))
+        judge_output_tokens = len(tokenizer.encode(response_text))
         judge_cost = calculate_cost(judge_model_name, judge_input_tokens, judge_output_tokens)
         judge_latency = end_time - start_time
 

@@ -82,8 +82,9 @@ def calculate_cost(model_name: str, input_tokens: int, output_tokens: int) -> fl
     return total_cost
 
 def video_token_per_second(model_name: str):
-    if model_name.startswith("gemini"):
+    if "gemini" in model_name:
         return TOTAL_INPUT_TOKENS_PER_SECOND
+
     token_info = VIDEO_TOKENS.get(model_name)
 
     if not token_info:

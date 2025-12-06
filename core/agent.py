@@ -54,7 +54,7 @@ class AgentState(TypedDict):
 # --- LLM and Tool Definitions ---
 tools = [policy_lookup_tool, claims_history_tool]
 tool_map = {tool.name : tool for tool in tools}
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.environ["GEMINI_API_KEY"], temperature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.environ["GEMINI_API_KEY_FREE"], temperature=0)
 llm_with_tools = llm.bind_tools(tools)
 
 # --- Graph Nodes ---

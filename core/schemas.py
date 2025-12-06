@@ -17,7 +17,7 @@ class VehicleDetails(BaseModel):
     vehicle_id: Optional[str] = Field(None, description="An optional identifier for the vehicle, e.g., 'A', 'B'.")
     color: str = Field(..., description="e.g., 'Blue', 'White', 'Black'")
     type: str = Field(..., description="e.g., 'Sedan', 'SUV', 'Truck'")
-    damage_direction: str = Field(..., description="e.g., 'Front-end', 'Rear-end', 'Driver-side'")
+    damage_direction: str = Field(..., description="e.g., 'Front-end', 'Rear-end', 'Driver-side', 'Unknown'")
     damage_level: str = Field(..., description="The severity of the damage. e.g., 'None', 'Minor', 'Moderate', 'Severe', 'Unknown'")
 
 class LiabilityIndicator(BaseModel):

@@ -5,13 +5,13 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 from analyzers.mock_analyzer import MockVLMAnalyzer
-from analyzers.gemini_analyzer import GeminiProAnalyzer
-from analyzers.openrouter_analyzer import OpenRouterAnalyzer
+from analyzers.vlm_analyzer import VLMAnalyzer
 from core.analyzers import AccidentAnalyzer
 from core.schemas import AnalysisResult
 from core.evaluation import evaluate_sync_metrics, evaluate_llm_judge_metrics_async
 from core.exporter import create_pdf_report
 from core.agent import app as agent_app
+from utils.llm_client import GeminiClient
 
 # Load environment variables
 load_dotenv()
@@ -47,9 +47,9 @@ st.markdown("""
 # --- Analyzer Strategy Mapping ---
 ANALYZER_CATALOG = {
     "Mock VLM (Demo)": (MockVLMAnalyzer, {}),
-    "Gemini 3 Pro (Preview)": (GeminiProAnalyzer, {"model_name": "gemini-3-pro-preview"}),
-    "Gemini 2.5 Pro": (GeminiProAnalyzer, {"model_name": "gemini-2.5-pro"}),
-    "Nemotron Nano 12B 2 VL": (OpenRouterAnalyzer, {"model_name": "nvidia/nemotron-nano-12b-v2-vl:free"}),
+    "Gemini 3 Pro (Preview)": (VLMAnalyzer, {"model_name": "gemini-3-pro-preview"}),
+    "Gemini 2.5 Pro": (VLMAnalyzer, {"model_name": "gemini-2.5-pro"}),
+    "Nemotron Nano 12B 2 VL": (VLMAnalyzer, {"model_name": "nvidia/nemotron-nano-12b-v2-vl:free"}),
 }
 
 # --- UI Rendering Functions ---
@@ -204,10 +204,10 @@ def get_analyzer(model_name: str) -> AccidentAnalyzer:
     analyzer_class, kwargs = ANALYZER_CATALOG.get(model_name, (None, {}))
     if analyzer_class:
         # Check for API key
-        if issubclass(analyzer_class, GeminiProAnalyzer) and not os.getenv("GEMINI_API_KEY"):
+        if issubclass(analyzer_class, VLMAnalyzer) and not os.getenv("GEMINI_API_KEY"):
             st.error("GEMINI_API_KEY not found. Please create a .env file with your key.")
             st.stop()
-        if issubclass(analyzer_class, OpenRouterAnalyzer) and not os.getenv("OPENROUTER_API_KEY"):
+        if issubclass(analyzer_class, VLMAnalyzer) and not os.getenv("OPENROUTER_API_KEY"):
             st.error("OPENROUTER_API_KEY not found. Please create a .env file with your key.")
             st.stop()
         return analyzer_class(**kwargs)
@@ -231,14 +231,14 @@ async def run_analysis_async(selected_models: list, video_path: str, status):
         tasks = []
         if gemini_models:
             log_message(status, "Uploading video to Gemini...")
-            uploaded_video_file = await GeminiProAnalyzer.upload_video(video_path)
+            uploaded_video_file = await GeminiClient.upload_video(video_path)
         for model_name in selected_models:
             if ANALYZER_CATALOG[model_name][0] is None:
                 results[model_name] = ("Model not implemented.", None)
                 continue
             log_message(status, f"Queuing analysis for {model_name}...")
             analyzer = get_analyzer(model_name)
-            coro = analyzer.analyze_video(video_path) if model_name not in gemini_models else analyzer.perform_analysis_on_file(uploaded_video_file, video_path)
+            coro = analyzer.analyze_video(video_path) if model_name not in gemini_models else analyzer.analyze_video(video_path, uploaded_video_file)
             tasks.append(run_and_tag(model_name, coro))
 
         log_message(status, f"Running {len(tasks)} tasks in parallel...")
@@ -253,7 +253,7 @@ async def run_analysis_async(selected_models: list, video_path: str, status):
     finally:
         if uploaded_video_file:
             log_message(status, "Cleaning up uploaded resources...")
-            await GeminiProAnalyzer.delete_video(uploaded_video_file)
+            await GeminiClient.delete_video(uploaded_video_file)
 
     return results
 
