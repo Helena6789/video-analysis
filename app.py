@@ -50,7 +50,7 @@ ANALYZER_CATALOG = {
     # "Mock VLM (Demo)": (MockVLMAnalyzer, {}),
     "Gemini 3 Pro (Preview)": (VLMAnalyzer, {"model_name": "gemini-3-pro-preview"}),
     "Gemini 2.5 Pro": (VLMAnalyzer, {"model_name": "gemini-2.5-pro"}),
-    "Nemotron Nano 12B 2 VL": (VLMAnalyzer, {"model_name": "nvidia/nemotron-nano-12b-v2-vl:free"}),
+    "Nemotron Nano 12B 2 VL (Free)": (VLMAnalyzer, {"model_name": "nvidia/nemotron-nano-12b-v2-vl:free"}),
     # "Qwen3 VL 8B Thinking": (VLMAnalyzer, {"model_name": "qwen/qwen3-vl-8b-thinking"}),
     "Qwen3 VL 235B A22B Thinking": (VLMAnalyzer, {"model_name": "qwen/qwen3-vl-235b-a22b-thinking"}),
     "GPT-5.1": (VLMAnalyzer, {"model_name": "openai/gpt-5.1"}),
@@ -244,7 +244,7 @@ async def run_analysis_async(selected_models: list, video_path: str, status):
                 continue
             log_message(status, f"Queuing analysis for {model_name}...")
             analyzer = get_analyzer(model_name)
-            
+
             if model_name in gemini_models: # Official Gemini
                 coro = analyzer.analyze_video(video_path, byte64_video=uploaded_video_file)
             else:
@@ -320,7 +320,7 @@ async def main():
                 use_container_width=True
             )
         # When displaying a result, the judge model is read from the saved config
-        judge_model = st.session_state.results.get("config", {}).get("judge_model", "gemini-2.5-flash")
+        judge_model = st.session_state.results.get("config", {}).get("judge_model", "nvidia/nemotron-nano-12b-v2-vl:free")
         await display_results_ui(st.session_state.results, judge_model)
     else:
         await run_new_analysis_ui()
@@ -335,7 +335,7 @@ async def run_new_analysis_ui():
     with col1:
         selected_models = st.multiselect("Select Model(s) for Comparison", options=list(ANALYZER_CATALOG.keys()), default=[])
     with col2:
-        judge_model = st.selectbox("Select Judge Model (for accuracy)", options=["gemini-2.5-flash", "gemini-2.5-flash-lite"], index=0)
+        judge_model = st.selectbox("Select Judge Model (for accuracy)", options=["nvidia/nemotron-nano-12b-v2-vl:free", "gemini-2.5-flash", "gemini-2.5-flash-lite"], index=0)
 
     if any(model.startswith("Gemini") for model in selected_models) and not os.getenv("GEMINI_API_KEY"):
         st.warning("Please provide your Gemini API key in a `.env` file to use Gemini models.")
