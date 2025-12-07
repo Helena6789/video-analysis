@@ -364,8 +364,9 @@ async def run_new_analysis_ui():
             _, video_col, _ = st.columns([0.4, 0.2, 0.4])
             with video_col:
                 st.video(video_path)
-
-        if st.button("Analyze Video", type="primary", key="analyze_button"):
+        analyze_button = st.button("Analyze Video", type="primary", key="analyze_button")
+        st.caption("AI can make mistakes. Please double-check the results.")
+        if analyze_button:
             if not selected_models:
                 st.warning("Please select at least one model.")
             else:
