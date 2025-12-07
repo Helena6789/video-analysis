@@ -29,7 +29,7 @@ class VLMAnalyzer(AccidentAnalyzer):
         self.model_name = model_name
         self.client = get_llm_client(model_name)
 
-    async def analyze_video(self, video_path: str, video_file = None) -> tuple[AnalysisResult, dict]:
+    async def analyze_video(self, video_path: str, byte64_video = None, byte64_frames = None) -> tuple[AnalysisResult, dict]:
         """
         Handles the full async lifecycle for a single video analysis.
         """
@@ -39,7 +39,7 @@ class VLMAnalyzer(AccidentAnalyzer):
 
             prompt = self._build_prompt()
             raw_response_text = await asyncio.to_thread(
-                self.client.invoke, self.model_name, prompt, video_path, video_file
+                self.client.invoke, self.model_name, prompt, byte64_video, byte64_frames
             )
             
             end_time = time.monotonic()
@@ -76,6 +76,8 @@ class VLMAnalyzer(AccidentAnalyzer):
             return result, performance
 
         except (ValidationError, json.JSONDecodeError, Exception) as e:
+            import traceback
+            traceback.print_exc()
             raise ValueError(f"Model output validation failed for {self.model_name}: {e}. Raw output: {raw_response_text}") from e
 
 

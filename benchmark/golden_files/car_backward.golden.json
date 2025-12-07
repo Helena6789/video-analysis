@@ -1,0 +1,34 @@
+{
+    "accident_summary": "A vehicle with a dashcam is following a white hatchback on a residential street. The white hatchback suddenly brakes and comes to a complete stop in the lane of travel for no apparent reason.",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Residential Street"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "No",
+        "injury_risk": "Low"
+    },
+    "vehicles_involved": [
+        {
+            "color": "White",
+            "type": "Hatchback",
+            "damage_direction": "Rear-end",
+            "damage_level": "Minor"
+        },
+        {
+            "color": "Not Visible",
+            "type": "Road vehicle",
+            "damage_direction": "Front-end",
+            "damage_level": "Minor"
+        }
+    ],
+    "collision_type": "Rear-End",
+    "liability_indicator": {
+        "color" : "White",
+        "type": "Hatchback",
+        "driver_major_behavior": "Failure to stop"
+    }
+}

@@ -42,15 +42,55 @@ GEMINI_PRICING = {
         "input": 0.1,
         "output": 0.4
     },
-    "nvidia/nemotron-nano-12b-v2-vl:free": {
-        "input": 0,
-        "output": 0
-    }
+    "qwen/qwen3-vl-8b-thinking": {
+        "input": 0.18,
+        "output": 2.1
+    },
+    "qwen/qwen3-vl-235b-a22b-thinking": {
+        "input": 0.3,
+        "output": 1.2
+    },
+    "openai/gpt-5.1": {
+        "input": 1.25,
+        "output": 10
+    },
+    "google/gemini-3-pro-preview": {
+        "tier_1": {
+            "input": 2.00,
+            "output": 12.00
+        },
+        "tier_2": {
+            "input": 4.00,
+            "output": 18.00
+        }
+    },
+    "google/gemini-2.5-pro": {
+        "tier_1": {
+            "input": 1.25,
+            "output": 10.00
+        },
+        "tier_2": {
+            "input": 2.50,
+            "output": 15.00
+        }
+    },
 }
 
 #Video token per second
 VIDEO_TOKENS = {
     "nvidia/nemotron-nano-12b-v2-vl:free": {
+        "fps": 2,
+        "token_per_frame": 256
+    },
+    "qwen/qwen3-vl-8b-thinking": {
+        "fps": 2,
+        "token_per_frame": 256
+    },
+    "qwen/qwen3-vl-235b-a22b-thinking": {
+        "fps": 2,
+        "token_per_frame": 256
+    },
+    "openai/gpt-5.1": {
         "fps": 2,
         "token_per_frame": 256
     }

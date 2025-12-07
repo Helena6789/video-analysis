@@ -12,6 +12,7 @@ from core.evaluation import evaluate_sync_metrics, evaluate_llm_judge_metrics_as
 from core.exporter import create_pdf_report
 from core.agent import app as agent_app
 from utils.llm_client import GeminiClient
+from utils.video_utils import extract_frames_as_base64, video_base64_encoding
 
 # Load environment variables
 load_dotenv()
@@ -46,10 +47,15 @@ st.markdown("""
 
 # --- Analyzer Strategy Mapping ---
 ANALYZER_CATALOG = {
-    "Mock VLM (Demo)": (MockVLMAnalyzer, {}),
+    # "Mock VLM (Demo)": (MockVLMAnalyzer, {}),
     "Gemini 3 Pro (Preview)": (VLMAnalyzer, {"model_name": "gemini-3-pro-preview"}),
     "Gemini 2.5 Pro": (VLMAnalyzer, {"model_name": "gemini-2.5-pro"}),
     "Nemotron Nano 12B 2 VL": (VLMAnalyzer, {"model_name": "nvidia/nemotron-nano-12b-v2-vl:free"}),
+    # "Qwen3 VL 8B Thinking": (VLMAnalyzer, {"model_name": "qwen/qwen3-vl-8b-thinking"}),
+    "Qwen3 VL 235B A22B Thinking": (VLMAnalyzer, {"model_name": "qwen/qwen3-vl-235b-a22b-thinking"}),
+    "GPT-5.1": (VLMAnalyzer, {"model_name": "openai/gpt-5.1"}),
+    "OpenRouter - Gemini 2.5 Pro": (VLMAnalyzer, {"model_name": "google/gemini-2.5-pro"}),
+    "OpenRouter - Gemini 3 Pro (Preview)": (VLMAnalyzer, {"model_name": "google/gemini-3-pro-preview"}),
 }
 
 # --- UI Rendering Functions ---
@@ -238,7 +244,14 @@ async def run_analysis_async(selected_models: list, video_path: str, status):
                 continue
             log_message(status, f"Queuing analysis for {model_name}...")
             analyzer = get_analyzer(model_name)
-            coro = analyzer.analyze_video(video_path) if model_name not in gemini_models else analyzer.analyze_video(video_path, uploaded_video_file)
+            
+            if model_name in gemini_models: # Official Gemini
+                coro = analyzer.analyze_video(video_path, byte64_video=uploaded_video_file)
+            else:
+                coro = analyzer.analyze_video(video_path, 
+                                byte64_video=video_base64_encoding(video_path),
+                                byte64_frames=extract_frames_as_base64(video_path)
+                )
             tasks.append(run_and_tag(model_name, coro))
 
         log_message(status, f"Running {len(tasks)} tasks in parallel...")

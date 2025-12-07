@@ -12,3 +12,4 @@ langchain-google-genai
 Jinja2
 WeasyPrint
 langchain-openai
+opencv-python

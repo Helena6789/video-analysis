@@ -1,7 +1,6 @@
 
 #utils/llm_client.py
 import os
-import base64
 import abc
 import time
 import asyncio
@@ -16,7 +15,7 @@ load_dotenv()
 class LLMClient(abc.ABC):
     """Abstract base class for a unified LLM client."""
     @abc.abstractmethod
-    def invoke(self, model_name: str, prompt: str, video_path: str = None, video_file = None) -> str:
+    def invoke(self, model_name: str, prompt: str, base64_video = None, byte64_frames = None) -> str:
         pass
 
 
@@ -29,14 +28,14 @@ class GeminiClient(LLMClient):
         genai.configure(api_key=self.api_key)
         self.models = {}
 
-    def invoke(self, model_name: str, prompt: str, video_path: str = None, video_file = None) -> str:
+    def invoke(self, model_name: str, prompt: str, base64_video = None, byte64_frames = None) -> str:
         if model_name not in self.models:
             self.models[model_name] = genai.GenerativeModel(model_name)
         
         content = [prompt]
-        if video_path:
-            # access uploaded file
-            content.append(video_file)
+        if base64_video:
+            # append uploaded file via genai.upload_file().
+            content.append(base64_video)
 
         response = self.models[model_name].generate_content(content)
         return response.text
@@ -72,7 +71,7 @@ class OpenRouterClient(LLMClient):
             raise ValueError("OPENROUTER_API_KEY not found in environment variables.")
         self.models = {}
     
-    def invoke(self, model_name: str, prompt: str, video_path: str = None, video_file = None) -> str:
+    def invoke(self, model_name: str, prompt: str, base64_video = None, byte64_frames = None) -> str:
         if model_name not in self.models:
             self.models[model_name] = ChatOpenAI(
                 model=model_name,
@@ -81,23 +80,33 @@ class OpenRouterClient(LLMClient):
             )
         
         content =  [{"type": "text", "text": prompt}]
-        if video_path:
-            with open(video_path, "rb") as video_file:
-                video_base64 = base64.b64encode(video_file.read()).decode("utf-8")
-            
+        if base64_video and self._model_support_base64_video(model_name):
+            print(f"Send video with video base64 encoding for {model_name}...")
             content.append({
                 "type": "video_url",
-                "video_url" : { "url": f"data:video/mp4;base64,{video_base64}"}
+                "video_url" : { "url": f"data:video/mp4;base64,{base64_video}"}
             })
+        elif byte64_frames:
+            print(f"Send video with image frames for {model_name}...")
+            for base64_frame in byte64_frames:
+                content.append({
+                    "type": "image_url",
+                    "image_url" : { "url": f"data:image/jpeg;base64,{base64_frame}"}
+                })
+
 
         message = HumanMessage(content=content)
         response = self.models[model_name].invoke([message])
         return response.content
 
+    def _model_support_base64_video(self, model_name):
+        if "nemotron" in model_name or "gemini" in model_name:
+            return True
+        return False
 
 def get_llm_client(model_name: str) -> LLMClient:
     """Factory function to get the correct client based on the model name."""
-    if "gemini" in model_name:
+    if model_name.startswith("gemini"): # Official Gemini instead of OpenRouter
         return GeminiClient()
     else:
         return OpenRouterClient()
