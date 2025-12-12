@@ -16,19 +16,22 @@
             "color": "White",
             "type": "Hatchback",
             "damage_direction": "Rear-end",
-            "damage_level": "Minor"
+            "damage_level": "Minor",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Not Visible",
             "type": "Road vehicle",
             "damage_direction": "Front-end",
-            "damage_level": "Minor"
+            "damage_level": "Minor",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Rear-End",
     "liability_indicator": {
-        "color" : "White",
+        "color": "White",
         "type": "Hatchback",
-        "driver_major_behavior": "Failure to stop"
+        "driver_major_behavior": "Failure to stop",
+        "dashcam_vehicle": "No"
     }
 }

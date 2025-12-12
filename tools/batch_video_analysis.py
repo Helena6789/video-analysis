@@ -5,6 +5,7 @@ import asyncio
 import json
 from datetime import datetime
 from dotenv import load_dotenv
+import argparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -17,18 +18,25 @@ from utils.video_utils import extract_frames_as_base64, video_base64_encoding
 # Load environment variables
 load_dotenv()
 
-VIDEO_DIR = "videos/tests"  # Path to the directory containing videos
-REPORTS_DIR = "reports/tests"  # Path to save the analysis reports
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description="Batch video analysis tool.")
+parser.add_argument("--video_dir", type=str, required=True, help="Path to the directory containing videos.")
+parser.add_argument("--reports_dir", type=str, required=True, help="Path to save the analysis reports.")
+args = parser.parse_args()
+
+VIDEO_DIR = args.video_dir
+REPORTS_DIR = args.reports_dir
+
 SELECTED_MODELS = [
-    # "Gemini 3 Pro (Preview)",
-    # "Gemini 2.5 Pro",
+    "Gemini 3 Pro (Preview)",
+    "Gemini 2.5 Pro",
     "Nemotron Nano 12B 2 VL (Free)",
-    # "Qwen3 VL 8B Thinking",
-    # "Qwen3 VL 235B A22B Thinking",
-    # "GPT-5.1",
-    # "GPT-5.2",
+    "Qwen3 VL 8B Thinking",
+    "Qwen3 VL 235B A22B Thinking",
+    "GPT-5.1",
+    "GPT-5.2",
 ]  # Predefined list of models
-JUDGE_MODEL = "nvidia/nemotron-nano-12b-v2-vl:free"  # Predefined judge model
+JUDGE_MODEL = "gemini-2.5-flash"  # Predefined judge model
 
 async def analyze_videos():
     """
@@ -89,23 +97,33 @@ async def analyze_videos():
         }
 
         for model_name, (result, performance) in analysis_results.items():
-            # Run evaluation on the fly before saving
-            sync_scores = None
-            judge_scores = None
-            judge_performance = None
-            if golden_data and isinstance(result, AnalysisResult):
-                print(f"Evaluating accuracy for {model_name}...")
-                sync_scores = evaluate_sync_metrics(result, golden_data)
-                judge_scores, judge_performance = await evaluate_llm_judge_metrics_async(result, golden_data, JUDGE_MODEL)
-                print(f"Completed accuracy evaluation for {model_name}")
+            try:
+                # Run evaluation on the fly before saving
+                sync_scores = None
+                judge_scores = None
+                judge_performance = None
+                if golden_data and isinstance(result, AnalysisResult):
+                    print(f"Evaluating accuracy for {model_name}...")
+                    sync_scores = evaluate_sync_metrics(result, golden_data)
+                    judge_scores, judge_performance = await evaluate_llm_judge_metrics_async(result, golden_data, JUDGE_MODEL)
+                    print(f"Completed accuracy evaluation for {model_name}")
 
-            results_obj["models"][model_name] = {
-                "result": result.model_dump() if result else None,
-                "performance": performance,
-                "sync_scores": sync_scores,
-                "judge_scores": judge_scores,
-                "judge_performance": judge_performance
-            }
+                results_obj["models"][model_name] = {
+                    "result": result.model_dump() if result else None,
+                    "performance": performance,
+                    "sync_scores": sync_scores,
+                    "judge_scores": judge_scores,
+                    "judge_performance": judge_performance
+                }
+            except Exception as e:
+                print(f"Error processing model {model_name}: {e}")
+                results_obj["models"][model_name] = {
+                    "result": None,
+                    "performance": {"error": str(e)},
+                    "sync_scores": None,
+                    "judge_scores": None,
+                    "judge_performance": None
+                }
 
         # Save the results to a JSON file
         report_filename = f"{results_obj['report_id']}.json"

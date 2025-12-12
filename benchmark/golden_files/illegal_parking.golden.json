@@ -16,19 +16,22 @@
             "color": "Black",
             "type": "Semi-truck",
             "damage_direction": "Front-end",
-            "damage_level": "Severe"
+            "damage_level": "Severe",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Silver",
             "type": "Minivan",
             "damage_direction": "Rear-end",
-            "damage_level": "Severe"
+            "damage_level": "Severe",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Rear-end",
     "liability_indicator": {
-        "color" : "Silver",
+        "color": "Silver",
         "type": "Minivan",
-        "driver_major_behavior": "Illegal parking"
+        "driver_major_behavior": "Illegal parking",
+        "dashcam_vehicle": "No"
     }
 }

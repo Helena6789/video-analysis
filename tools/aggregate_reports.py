@@ -3,9 +3,17 @@ import os
 import json
 import pandas as pd
 from datetime import datetime
+import argparse
 
-REPORTS_DIR = "reports"
-SUMMARY_DIR = "summary"
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Aggregate reports and generate summaries.")
+    parser.add_argument("--reports-dir", default="reports", help="Directory containing the report JSON files.")
+    parser.add_argument("--summary-dir", default="summary", help="Directory to save the summary outputs.")
+    return parser.parse_args()
+
+args = parse_arguments()
+REPORTS_DIR = args.reports_dir
+SUMMARY_DIR = args.summary_dir
 
 def load_and_process_reports():
     """Loads all JSON reports and flattens them into a list of records."""
@@ -16,6 +24,7 @@ def load_and_process_reports():
     
     for report_file in report_files:
         filepath = os.path.join(REPORTS_DIR, report_file)
+        print(f"Processing report: {report_file}")
         with open(filepath, "r") as f:
             data = json.load(f)
             
@@ -47,38 +56,94 @@ def load_and_process_reports():
     return all_records
 
 def generate_summary_html(by_case_df, by_model_df):
-    """Generates a clean HTML report from the dataframes, highlighting the best scores."""
+    """Generates a clean HTML report from the dataframes, highlighting best scores and separating cases."""
     
-    def highlight_max_or_min(s, column_name):
-        if column_name == "latency" or column_name == "cost":
-            # Highlight the lowest value for latency
-            is_min = s == s.min()
-            return ['background-color: #d4edda' if v else '' for v in is_min]
+    # --- 1. Styling Logic ---
+    def highlight_global_best(s):
+        if s.name in ["latency", "cost"]:
+            is_best = s == s.min()
         else:
-            # Highlight the highest value for other columns
-            is_max = s == s.max()
-            return ['background-color: #d4edda' if v else '' for v in is_max]
+            is_best = s == s.max()
+        return ['background-color: #d4edda' if v else '' for v in is_best]
 
-    # Apply styling to both dataframes
-    styled_by_model = by_model_df.style.apply(lambda s: highlight_max_or_min(s, s.name), axis=0)
-    styled_by_case = by_case_df.style.apply(lambda s: highlight_max_or_min(s, s.name), axis=0)
+    def highlight_best_per_case(s):
+        if s.name in ["latency", "cost"]:
+            best_in_group = s.groupby(level=0).transform('min')
+        else:
+            best_in_group = s.groupby(level=0).transform('max')
+        is_best = s == best_in_group
+        return ['background-color: #d4edda' if v else '' for v in is_best]
 
+    def draw_group_separators(df):
+        """Applies a thick top border to the first row of every new group (case)."""
+        styles = pd.DataFrame('', index=df.index, columns=df.columns)
+        cases = df.index.get_level_values(0)
+        prev_case = cases[0]
+        for i, case in enumerate(cases):
+            if case != prev_case:
+                styles.iloc[i] = 'border-top: 3px solid #555;'
+            prev_case = case
+        return styles
+
+    # --- 2. Apply Styles ---
+    styled_by_model = by_model_df.style.apply(highlight_global_best, axis=0)
+    
+    styled_by_case = (by_case_df.style
+                      .apply(highlight_best_per_case, axis=0)
+                      .apply(draw_group_separators, axis=None))
+
+    # --- 3. HTML Generation (CSS FIX APPLIED BELOW) ---
     html_template = f"""
     <html>
     <head>
         <title>Performance Analysis Summary</title>
         <style>
-            body {{ font-family: sans-serif; margin: 20px; }}
-            h1, h2 {{ color: #1E88E5; }}
-            table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }}
-            th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-            th {{ background-color: #f2f2f2; }}
-            tr:nth-child(even) {{ background-color: #f9f9f9; }}
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 30px; background-color: #f4f6f8; }}
+            h1, h2 {{ color: #2c3e50; }}
+            h1 {{ border-bottom: 2px solid #2c3e50; padding-bottom: 10px; }}
+            
+            table {{ 
+                border-collapse: collapse; 
+                width: 100%; 
+                margin-bottom: 30px; 
+                background-color: white; 
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+            }}
+            
+            /* --- FIXED SECTIONS --- */
+            
+            /* 1. Main Header (Top Row) - White text on Blue */
+            thead th {{ 
+                background-color: #007bff; 
+                color: white; 
+                border: 1px solid #007bff; 
+                padding: 12px 15px; 
+                text-align: left;
+            }}
+            
+            /* 2. Row Headers (The 'Case' column) - Dark text on Light Gray */
+            tbody th {{ 
+                background-color: #f8f9fa; 
+                color: #333333; /* Dark text for visibility */
+                border: 1px solid #dee2e6; 
+                font-weight: bold; 
+                padding: 12px 15px;
+                text-align: left;
+                vertical-align: top; /* Aligns text to top for long merged cells */
+            }}
+            
+            /* 3. Data Cells */
+            td {{ 
+                border: 1px solid #e0e0e0; 
+                padding: 12px 15px; 
+                color: #333;
+            }}
+            
         </style>
     </head>
     <body>
         <h1>VLM Performance Analysis Summary</h1>
-        <p>Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        <p style="color: #666;">Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
         
         <h2>Average Performance by Model</h2>
         {styled_by_model.to_html(float_format='%.2f')}

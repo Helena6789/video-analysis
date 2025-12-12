@@ -16,19 +16,22 @@
             "color": "Silver",
             "type": "Hatchback",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Grey",
             "type": "Hatchback",
             "damage_direction": "Side-impact",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "T-bone",
     "liability_indicator": {
-        "color" : "Grey",
+        "color": "Grey",
         "type": "Hatchback",
-        "driver_major_behavior": "Improper turn."
+        "driver_major_behavior": "Improper turn.",
+        "dashcam_vehicle": "No"
     }
 }

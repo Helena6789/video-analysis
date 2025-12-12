@@ -16,19 +16,22 @@
             "color": "Black",
             "type": "Sedan",
             "damage_direction": "Side-impact",
-            "damage_level": "Minor"
+            "damage_level": "Minor",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Unknown",
             "type": "Unknown",
             "damage_direction": "Front-end",
-            "damage_level": "Minor"
+            "damage_level": "Minor",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "T-bone",
     "liability_indicator": {
-        "color" : "Black",
+        "color": "Black",
         "type": "Sedan",
-        "driver_major_behavior": "Improper left turn"
+        "driver_major_behavior": "Improper left turn",
+        "dashcam_vehicle": "No"
     }
 }

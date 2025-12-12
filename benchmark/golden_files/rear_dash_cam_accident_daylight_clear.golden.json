@@ -16,19 +16,22 @@
             "color": "Silver",
             "type": "Minivan",
             "damage_direction": "Side-damage",
-            "damage_level": "Medium"
+            "damage_level": "Medium",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Black",
             "type": "Sedan",
             "damage_direction": "Front-end",
-            "damage_level": "Medium"
+            "damage_level": "Medium",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "T-Bone",
     "liability_indicator": {
-        "color" : "Silver",
+        "color": "Silver",
         "type": "Minivan",
-        "driver_major_behavior": "Improper roadway crossing"
+        "driver_major_behavior": "Improper roadway crossing",
+        "dashcam_vehicle": "No"
     }
 }

@@ -16,19 +16,22 @@
             "color": "White",
             "type": "sedan",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Unknown",
             "type": "Unknown",
             "damage_direction": "Rear-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Rear-end",
     "liability_indicator": {
-        "color" : "White",
+        "color": "White",
         "type": "sedan",
-        "driver_major_behavior": "The white sedan failed to slow down appropriately, resulting in a rear-end collision."
+        "driver_major_behavior": "The white sedan failed to slow down appropriately, resulting in a rear-end collision.",
+        "dashcam_vehicle": "No"
     }
 }

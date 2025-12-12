@@ -28,20 +28,23 @@ class MockVLMAnalyzer(AccidentAnalyzer):
                     color="Blue",
                     type="Sedan",
                     damage_direction="Front-end",
-                    damage_level="Severe"
+                    damage_level="Severe",
+                    dashcam_vehicle="Yes"
                 ),
                 VehicleDetails(
                     vehicle_id="B",
                     color="White",
                     type="SUV",
                     damage_direction="Rear-end",
-                    damage_level="Moderate"
+                    damage_level="Moderate",
+                    dashcam_vehicle="No"
                 )
             ],
             liability_indicator=LiabilityIndicator(
                 color="Blue",
                 type="Sedan",
-                driver_major_behavior="Inattentive Driving"
+                driver_major_behavior="Inattentive Driving",
+                dashcam_vehicle="Yes"
             ),
             environmental_conditions=EnvironmentalConditions(
                 time_of_day="Daylight",

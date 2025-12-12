@@ -19,11 +19,13 @@ class VehicleDetails(BaseModel):
     type: str = Field(..., description="e.g., 'Sedan', 'SUV', 'Truck'")
     damage_direction: str = Field(..., description="e.g., 'Front-end', 'Rear-end', 'Driver-side', 'Unknown'")
     damage_level: str = Field(..., description="The severity of the damage. e.g., 'None', 'Minor', 'Moderate', 'Severe', 'Unknown'")
+    dashcam_vehicle: str = Field(..., description="A string: 'Yes', 'No', or 'Unknown'")
 
 class LiabilityIndicator(BaseModel):
     color: str = Field(..., description="The color of the at-fault vehicle.")
     type: str = Field(..., description="The type of the at-fault vehicle.")
     driver_major_behavior: str = Field(..., description="The key action of the at-fault driver that caused the accident.")
+    dashcam_vehicle: str = Field(..., description="A string: 'Yes', 'No', or 'Unknown'")
 
 class AnalysisResult(BaseModel):
     """The comprehensive analysis result schema."""

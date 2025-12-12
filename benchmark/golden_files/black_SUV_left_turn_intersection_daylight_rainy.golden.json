@@ -16,19 +16,22 @@
             "color": "Black",
             "type": "SUV",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Black",
             "type": "SUV",
             "damage_direction": "Side-impact",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "T-Bone",
     "liability_indicator": {
-        "color" : "Black",
+        "color": "Black",
         "type": "SUV",
-        "driver_major_behavior": "Failure yield on left turn"
+        "driver_major_behavior": "Failure yield on left turn",
+        "dashcam_vehicle": "No"
     }
 }

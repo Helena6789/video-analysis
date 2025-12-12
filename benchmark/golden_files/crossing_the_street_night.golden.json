@@ -16,19 +16,22 @@
             "color": "Silver",
             "type": "Semi-truck",
             "damage_direction": "Side-damage",
-            "damage_level": "Medium"
+            "damage_level": "Medium",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Unknown",
             "type": "Unknown",
             "damage_direction": "Front-end",
-            "damage_level": "Medium"
+            "damage_level": "Medium",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "T-Bone",
     "liability_indicator": {
-        "color" : "Silver",
+        "color": "Silver",
         "type": "Semi-truck",
-        "driver_major_behavior": "Failure to yield the right-of-way"
+        "driver_major_behavior": "Failure to yield the right-of-way",
+        "dashcam_vehicle": "No"
     }
 }

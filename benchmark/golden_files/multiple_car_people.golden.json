@@ -16,19 +16,22 @@
             "color": "Black",
             "type": "Sedan",
             "damage_direction": "Front-end",
-            "damage_level": "Severe"
+            "damage_level": "Severe",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Red",
             "type": "Road vehicle",
             "damage_direction": "Rear-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Rear-End",
     "liability_indicator": {
-        "color" : "Black",
+        "color": "Black",
         "type": "Sedan",
-        "driver_major_behavior": "Speeding and inattentive Driving"
+        "driver_major_behavior": "Speeding and inattentive Driving",
+        "dashcam_vehicle": "No"
     }
 }

@@ -16,19 +16,22 @@
             "color": "Silver",
             "type": "Hatchback",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Dark",
             "type": "Motorcycle",
             "damage_direction": "Side-impact",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "T-bone",
     "liability_indicator": {
-        "color" : "Silver",
+        "color": "Silver",
         "type": "Hatchback",
-        "driver_major_behavior": "Failure to yield right of way while turning."
+        "driver_major_behavior": "Failure to yield right of way while turning.",
+        "dashcam_vehicle": "No"
     }
 }

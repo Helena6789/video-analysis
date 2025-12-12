@@ -16,19 +16,22 @@
             "color": "Black",
             "type": "SUV",
             "damage_direction": "Front-end",
-            "damage_level": "Minor"
+            "damage_level": "Minor",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Silver",
             "type": "Sedan",
             "damage_direction": "Side-damage",
-            "damage_level": "Minor"
+            "damage_level": "Minor",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "T-bone",
     "liability_indicator": {
-        "color" : "Black",
+        "color": "Black",
         "type": "SUV",
-        "driver_major_behavior": "Traveling against traffic"
+        "driver_major_behavior": "Traveling against traffic",
+        "dashcam_vehicle": "No"
     }
 }

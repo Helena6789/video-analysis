@@ -16,19 +16,22 @@
             "color": "White",
             "type": "SUV",
             "damage_direction": "Rear-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Red",
             "type": "Jeep",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Angle Collision",
     "liability_indicator": {
-        "color" : "White",
+        "color": "White",
         "type": "SUV",
-        "driver_major_behavior": "The left turning SUV not yield the right-of-way "
+        "driver_major_behavior": "The left turning SUV not yield the right-of-way ",
+        "dashcam_vehicle": "No"
     }
 }

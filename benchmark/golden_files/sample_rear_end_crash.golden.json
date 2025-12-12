@@ -16,19 +16,22 @@
             "color": "Blue",
             "type": "Sedan",
             "damage_direction": "Front-end",
-            "damage_level": "Severe"
+            "damage_level": "Severe",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "White",
             "type": "SUV",
             "damage_direction": "Rear-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Rear-End",
     "liability_indicator": {
-        "color" : "Blue",
+        "color": "Blue",
         "type": "Sedan",
-        "driver_major_behavior": "Changing lanes without signaling"
+        "driver_major_behavior": "Changing lanes without signaling",
+        "dashcam_vehicle": "No"
     }
 }

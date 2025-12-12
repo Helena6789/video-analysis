@@ -33,7 +33,7 @@ tokenizer = tiktoken.get_encoding("cl100k_base")
 def _calculate_attribute_similarity(model_vehicle: dict, golden_vehicle: dict) -> float:
     """Calculates a weighted similarity score between two vehicle attribute dicts."""
     score = 0.0
-    weights = {"color": 0.4, "type": 0.4, "damage_direction": 0.1, "damage_level": 0.1}
+    weights = {"color": 0.3, "type": 0.3, "damage_direction": 0.1, "damage_level": 0.1, "dashcam_vehicle": 0.2}
 
     for key, weight in weights.items():
         if model_vehicle.get(key, "").lower() == golden_vehicle.get(key, "").lower():
@@ -84,7 +84,7 @@ def evaluate_vehicle_score(model_vehicles: list, golden_vehicles: list) -> float
 def evaluate_liability_score(model_liability, golden_liability: dict) -> float:
     """Calculates a weighted similarity score for the liability indicator."""
     score = 0.0
-    weights = {"driver_major_behavior": 0.5, "color": 0.25, "type": 0.25}
+    weights = {"driver_major_behavior": 0.4, "color": 0.2, "type": 0.2, "dashcam_vehicle": 0.2}
 
     ref = [word_tokenize(golden_liability["driver_major_behavior"].lower())]
     cand = word_tokenize(model_liability.driver_major_behavior.lower())
@@ -94,6 +94,8 @@ def evaluate_liability_score(model_liability, golden_liability: dict) -> float:
         score += weights["color"]
     if model_liability.type.lower() == golden_liability["type"].lower():
         score += weights["type"]
+    if model_liability.dashcam_vehicle.lower() == golden_liability["dashcam_vehicle"].lower():
+        score += weights["dashcam_vehicle"]
 
     return score
 

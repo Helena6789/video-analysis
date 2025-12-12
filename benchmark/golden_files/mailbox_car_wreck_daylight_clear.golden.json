@@ -16,19 +16,15 @@
             "color": "Blue",
             "type": "Sedan",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
-        },
-        {
-            "color": "Unknown",
-            "type": "Unknown",
-            "damage_direction": "Unknown",
-            "damage_level": "Unknown"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Single vehicle collision",
     "liability_indicator": {
-        "color" : "Blue",
+        "color": "Blue",
         "type": "Sedan",
-        "driver_major_behavior": "Loss of control and departed its lane due to a high rate of speed."
+        "driver_major_behavior": "Loss of control and departed its lane due to a high rate of speed.",
+        "dashcam_vehicle": "No"
     }
 }

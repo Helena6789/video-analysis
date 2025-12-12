@@ -16,19 +16,22 @@
             "color": "Grey",
             "type": "Sedan",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Black",
             "type": "Unknown",
             "damage_direction": "Driver-side",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "Yes"
         }
     ],
     "collision_type": "Side-impact",
     "liability_indicator": {
-        "color" : "Grey",
+        "color": "Grey",
         "type": "Sedan",
-        "driver_major_behavior": "The left turning grey sedan not yield the right-of-way"
+        "driver_major_behavior": "The left turning grey sedan not yield the right-of-way",
+        "dashcam_vehicle": "No"
     }
 }

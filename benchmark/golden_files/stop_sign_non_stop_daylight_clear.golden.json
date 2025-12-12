@@ -16,19 +16,22 @@
             "color": "White",
             "type": "Semi-truck",
             "damage_direction": "Side-impact",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Silver",
             "type": "Semi-truck",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "T-bone",
     "liability_indicator": {
-        "color" : "White",
+        "color": "White",
         "type": "Semi-truck",
-        "driver_major_behavior": "Did not stop and check at the stop sign"
+        "driver_major_behavior": "Did not stop and check at the stop sign",
+        "dashcam_vehicle": "No"
     }
 }

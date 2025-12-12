@@ -16,19 +16,22 @@
             "color": "White",
             "type": "SUV",
             "damage_direction": "Front-end",
-            "damage_level": "Severe"
+            "damage_level": "Severe",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Black",
             "type": "Sedan",
             "damage_direction": "Passenger-side",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "T-Bone",
     "liability_indicator": {
-        "color" : "White",
+        "color": "White",
         "type": "SUV",
-        "driver_major_behavior": "Speeding and inattentive Driving"
+        "driver_major_behavior": "Speeding and inattentive Driving",
+        "dashcam_vehicle": "No"
     }
 }

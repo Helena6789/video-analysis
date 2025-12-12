@@ -16,19 +16,22 @@
             "color": "Silver",
             "type": "Truck",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Silver",
             "type": "Minivan",
             "damage_direction": "Rear-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Rear-end",
     "liability_indicator": {
-        "color" : "Silver",
+        "color": "Silver",
         "type": "Truck",
-        "driver_major_behavior": "The silver truck failed to slow down appropriately, resulting in a rear-end collision."
+        "driver_major_behavior": "The silver truck failed to slow down appropriately, resulting in a rear-end collision.",
+        "dashcam_vehicle": "No"
     }
 }

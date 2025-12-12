@@ -16,19 +16,22 @@
             "color": "White",
             "type": "SUV",
             "damage_direction": "Side-damage",
-            "damage_level": "Minor"
+            "damage_level": "Minor",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Grey",
             "type": "Sedan",
             "damage_direction": "Side-damage",
-            "damage_level": "Minor"
+            "damage_level": "Minor",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Side-impact",
     "liability_indicator": {
-        "color" : "White",
+        "color": "White",
         "type": "SUV",
-        "driver_major_behavior": "Unsafe lane change"
+        "driver_major_behavior": "Unsafe lane change",
+        "dashcam_vehicle": "No"
     }
 }

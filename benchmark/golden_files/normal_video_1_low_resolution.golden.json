@@ -16,13 +16,15 @@
             "color": "N/A",
             "type": "N/A",
             "damage_direction": "N/A",
-            "damage_level": "N/A"
+            "damage_level": "N/A",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "N/A",
     "liability_indicator": {
-        "color" : "N/A",
+        "color": "N/A",
         "type": "N/A",
-        "driver_major_behavior": "N/A"
+        "driver_major_behavior": "N/A",
+        "dashcam_vehicle": "No"
     }
 }

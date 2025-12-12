@@ -16,19 +16,22 @@
             "color": "White",
             "type": "Truck",
             "damage_direction": "Side-impact",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Dark Grey",
             "type": "SUV",
             "damage_direction": "Front-end",
-            "damage_level": "Severe"
+            "damage_level": "Severe",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "T-bone",
     "liability_indicator": {
-        "color" : "Dark Grey",
+        "color": "Dark Grey",
         "type": "SUV",
-        "driver_major_behavior": "Ran a red light."
+        "driver_major_behavior": "Ran a red light.",
+        "dashcam_vehicle": "No"
     }
 }

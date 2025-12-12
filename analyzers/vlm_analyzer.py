@@ -104,15 +104,17 @@ class VLMAnalyzer(AccidentAnalyzer):
             {{
               "vehicle_id": "An optional identifier, e.g., 'A', 'B'",
               "color": "e.g., 'Blue', 'White', 'Black', 'Unknown'",
-              "type": "e.g., 'Sedan', 'SUV', 'Truck', "Bus", "Road vehicle", 'Jeep', 'Semi-truck', 'Minivan', 'Unknown'",
+              "type": "e.g., 'Sedan', 'SUV', 'Truck', 'Bus', 'Road vehicle', 'Jeep', 'Semi-truck', 'Minivan', 'Unknown'",
               "damage_direction": "e.g., 'Front-end', 'Rear-end', 'Driver-side', 'Side-impact', 'Unknown'",
-              "damage_level": "Choose one: 'None', 'Minor', 'Moderate', 'Severe', 'Unknown'"
+              "damage_level": "Choose one: 'None', 'Minor', 'Moderate', 'Severe', 'Unknown'",
+              "dashcam_vehicle": "Choose one: 'Yes', 'No', 'Unknown'. Set to 'Yes' if this vehicle is the one the dashcam is mounted on."
             }}
           ],
           "liability_indicator": {{
             "color": "The color of the single at-fault vehicle.",
             "type": "The type of the single at-fault vehicle.",
-            "driver_major_behavior": "The single key action of the at-fault driver that caused the accident, e.g., 'Speeding', 'Ran a red light'."
+            "driver_major_behavior": "The single key action of the at-fault driver that caused the accident, e.g., 'Speeding', 'Ran a red light'.",
+            "dashcam_vehicle": "Choose one: 'Yes', 'No', 'Unknown'. Set to 'Yes' if this vehicle is the one the dashcam is mounted on."
           }},
           "environmental_conditions": {{
             "time_of_day": "Choose one: 'Daylight', 'Dusk', 'Night', 'Dawn', 'Unknown'",

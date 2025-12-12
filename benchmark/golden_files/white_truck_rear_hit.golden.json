@@ -1,0 +1,37 @@
+{
+    "accident_summary": "At an multiple lane highway, the white truck braked due to slowing traffic ahead, and the following vehicle failed to stop in time, resulting in a potential collision.",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Highway"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Unknown"
+    },
+    "vehicles_involved": [
+        {
+            "color": "White",
+            "type": "Truck",
+            "damage_direction": "Rear-end",
+            "damage_level": "Unknown",
+            "dashcam_vehicle": "Yes"
+        },
+        {
+            "color": "Unknown",
+            "type": "Unknown",
+            "damage_direction": "Unknown",
+            "damage_level": "Unknown",
+            "dashcam_vehicle": "No"
+        }
+    ],
+    "collision_type": "Rear-end",
+    "liability_indicator": {
+        "color": "Unknown",
+        "type": "Unknown",
+        "driver_major_behavior": "Following too closely.",
+        "dashcam_vehicle": "No"
+    }
+}

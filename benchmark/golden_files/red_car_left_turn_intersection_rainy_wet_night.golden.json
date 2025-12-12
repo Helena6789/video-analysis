@@ -16,19 +16,22 @@
             "color": "Red",
             "type": "SUV",
             "damage_direction": "Front-end",
-            "damage_level": "Minor"
+            "damage_level": "Minor",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Black",
             "type": "SUV",
             "damage_direction": "Front-end",
-            "damage_level": "Minor"
+            "damage_level": "Minor",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Front-end",
     "liability_indicator": {
-        "color" : "Red",
+        "color": "Red",
         "type": "SUV",
-        "driver_major_behavior": "Red SUV left turning not yield the right-of-way"
+        "driver_major_behavior": "Red SUV left turning not yield the right-of-way",
+        "dashcam_vehicle": "No"
     }
 }

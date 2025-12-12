@@ -16,19 +16,22 @@
             "color": "Red",
             "type": "Sedan",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Grey",
             "type": "SUV",
             "damage_direction": "Front-end",
-            "damage_level": "Severe"
+            "damage_level": "Severe",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Front-end",
     "liability_indicator": {
-        "color" : "Red",
+        "color": "Red",
         "type": "Sedan",
-        "driver_major_behavior": "Driving in the opposite direction of traffic"
+        "driver_major_behavior": "Driving in the opposite direction of traffic",
+        "dashcam_vehicle": "No"
     }
 }

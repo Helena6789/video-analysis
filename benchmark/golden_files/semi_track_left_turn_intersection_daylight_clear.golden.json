@@ -16,19 +16,22 @@
             "color": "Black",
             "type": "Truck",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         },
         {
             "color": "Black",
             "type": "Sedan",
             "damage_direction": "Front-end",
-            "damage_level": "Moderate"
+            "damage_level": "Moderate",
+            "dashcam_vehicle": "No"
         }
     ],
     "collision_type": "Front-End",
     "liability_indicator": {
-        "color" : "Black",
+        "color": "Black",
         "type": "Truck",
-        "driver_major_behavior": "The left turning not yield the right-of-way "
+        "driver_major_behavior": "The left turning not yield the right-of-way ",
+        "dashcam_vehicle": "No"
     }
 }

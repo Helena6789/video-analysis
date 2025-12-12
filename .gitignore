@@ -11,7 +11,8 @@ venv
 
 *.pdf
 benchmark/videos/*.*
-reports/*.json
+reports/*
+!reports/README
 benchmark/golden_files/tests/*.*
 reports/tests/*.*
 summary/*.*
