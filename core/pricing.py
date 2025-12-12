@@ -55,6 +55,10 @@ GEMINI_PRICING = {
         "input": 1.25,
         "output": 10
     },
+    "openai/gpt-5.2": {
+        "input": 1.75,
+        "output": 14
+    },
     "google/gemini-3-pro-preview": {
         "tier_1": {
             "input": 2.00,

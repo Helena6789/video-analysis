@@ -1,4 +1,4 @@
-#utils/recalculate_sync_scores.py
+#tools/recalculate_sync_scores.py
 import os
 import json
 import sys
