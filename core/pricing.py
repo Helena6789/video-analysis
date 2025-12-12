@@ -42,13 +42,14 @@ GEMINI_PRICING = {
         "input": 0.1,
         "output": 0.4
     },
+    # The actual price seems 10x higher than documented, probably because of thinking.
     "qwen/qwen3-vl-8b-thinking": {
-        "input": 0.18,
-        "output": 2.1
+        "input": 1.8,
+        "output": 21
     },
     "qwen/qwen3-vl-235b-a22b-thinking": {
-        "input": 0.3,
-        "output": 1.2
+        "input": 3,
+        "output": 12
     },
     "openai/gpt-5.1": {
         "input": 1.25,

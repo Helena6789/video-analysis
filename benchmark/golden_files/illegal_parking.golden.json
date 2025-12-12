@@ -1,0 +1,34 @@
+{
+    "accident_summary": "On a highway, a silver minivan was stopped on the roadside when a black semi-truck traveling straight collided with its rear. Weather was clear, and the roadway was dry",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Highway"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Severe"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Black",
+            "type": "Semi-truck",
+            "damage_direction": "Front-end",
+            "damage_level": "Severe"
+        },
+        {
+            "color": "Silver",
+            "type": "Minivan",
+            "damage_direction": "Rear-end",
+            "damage_level": "Severe"
+        }
+    ],
+    "collision_type": "Rear-end",
+    "liability_indicator": {
+        "color" : "Silver",
+        "type": "Minivan",
+        "driver_major_behavior": "Illegal parking"
+    }
+}

@@ -1,0 +1,34 @@
+{
+    "accident_summary": "In a residential area at night under limited visibility, a vehicle was making a left turn when it made contact with a parked vehicle along the roadside. Weather was clear and the roadway surface was dry",
+    "environmental_conditions": {
+        "time_of_day": "Night",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Residential area"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "No",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Black",
+            "type": "Sedan",
+            "damage_direction": "Front-end",
+            "damage_level": "Moderate"
+        },
+        {
+            "color": "Unknown",
+            "type": "Unknown",
+            "damage_direction": "Rear-end",
+            "damage_level": "Moderate"
+        }
+    ],
+    "collision_type": "Rear-end",
+    "liability_indicator": {
+        "color" : "Black",
+        "type": "Sedan",
+        "driver_major_behavior": "Collision with a parked vehicle"
+    }
+}

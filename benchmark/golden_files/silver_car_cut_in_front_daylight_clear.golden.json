@@ -1,0 +1,34 @@
+{
+    "accident_summary": "Both vehicles were making simultaneous right turns at the intersection, each in its own designated turn lane. The silver sedan made an unsafe lane change and encroached into the adjacent lane, resulting in a collision. Weather was clear and roadway conditions were dry",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Low"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Silver",
+            "type": "Sedan",
+            "damage_direction": "Rear-end",
+            "damage_level": "Minor"
+        },
+        {
+            "color": "Black",
+            "type": "SUV",
+            "damage_direction": "Front-end",
+            "damage_level": "Minor"
+        }
+    ],
+    "collision_type": "Side-impact",
+    "liability_indicator": {
+        "color" : "Silver",
+        "type": "Sedan",
+        "driver_major_behavior": "Unsafe lane change"
+    }
+}

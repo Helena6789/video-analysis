@@ -1,0 +1,34 @@
+{
+    "accident_summary": "A black sedan, traveling at a high rate of speed, rear-ends a slow-moving vehicle towing red agricultural equipment. The impact causes the sedan to launch into the air, flip, and roll violently multiple times, scattering a large amount of debris across the highway before coming to a rest.",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Highway"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Black",
+            "type": "Sedan",
+            "damage_direction": "Front-end",
+            "damage_level": "Severe"
+        },
+        {
+            "color": "Red",
+            "type": "Road vehicle",
+            "damage_direction": "Rear-end",
+            "damage_level": "Moderate"
+        }
+    ],
+    "collision_type": "Rear-End",
+    "liability_indicator": {
+        "color" : "Black",
+        "type": "Sedan",
+        "driver_major_behavior": "Speeding and inattentive Driving"
+    }
+}

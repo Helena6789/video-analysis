@@ -1,0 +1,34 @@
+{
+    "accident_summary": "Two vehicles collided at an intersection. One of them, a red SUV, failed to yield to a black SUV traveling straight while making a left turn, resulting in the collision. Weather conditions were rainy, and the road surface was wet",
+    "environmental_conditions": {
+        "time_of_day": "Night",
+        "weather": "Rainy",
+        "road_conditions": "Wet",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Red",
+            "type": "SUV",
+            "damage_direction": "Front-end",
+            "damage_level": "Minor"
+        },
+        {
+            "color": "Black",
+            "type": "SUV",
+            "damage_direction": "Front-end",
+            "damage_level": "Minor"
+        }
+    ],
+    "collision_type": "Front-end",
+    "liability_indicator": {
+        "color" : "Red",
+        "type": "SUV",
+        "driver_major_behavior": "Red SUV left turning not yield the right-of-way"
+    }
+}

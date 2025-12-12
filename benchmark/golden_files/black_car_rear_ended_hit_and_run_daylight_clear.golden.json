@@ -1,0 +1,34 @@
+{
+    "accident_summary": "At an intersection, a black Chevrolet failed to slow down sufficiently and rear-ended the vehicle in front. The weather was clear, and the road surface was dry",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Black",
+            "type": "sedan",
+            "damage_direction": "Front-end",
+            "damage_level": "Moderate"
+        },
+        {
+            "color": "Unknown",
+            "type": "Unknown",
+            "damage_direction": "Rear-end",
+            "damage_level": "Moderate"
+        }
+    ],
+    "collision_type": "Rear-end",
+    "liability_indicator": {
+        "color" : "Black",
+        "type": "Sedan",
+        "driver_major_behavior": "The black sedan failed to slow down appropriately, resulting in a rear-end collision."
+    }
+}

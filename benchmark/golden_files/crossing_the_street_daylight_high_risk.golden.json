@@ -1,0 +1,34 @@
+{
+    "accident_summary": "The dashcam vehicle was traveling straight through a small four-way intersection with no traffic signals, a collision occurred between the dashcam vehicle and a black sedan crossing the roadway. The black sedan pulled directly into the dashcam vehicle, resulting in a T-bone collision. The incident took place at daylight under clear weather conditions",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "No",
+        "injury_risk": "High"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Black",
+            "type": "Sedan",
+            "damage_direction": "Side-damage",
+            "damage_level": "Medium"
+        },
+        {
+            "color": "Light Grey",
+            "type": "Unknown",
+            "damage_direction": "Front-end",
+            "damage_level": "Medium"
+        }
+    ],
+    "collision_type": "T-Bone",
+    "liability_indicator": {
+        "color" : "Black",
+        "type": "Sedan",
+        "driver_major_behavior": "Improper roadway crossing"
+    }
+}

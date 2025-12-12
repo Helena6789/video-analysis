@@ -1,0 +1,34 @@
+{
+    "accident_summary": "Two cars collided at an intersection, no traffic light, one of the grey sedan turning left failed to yield the right of way to the black car proceeding straight, resulting in a collision between the two vehicles. Weather was clear, and the road surface was dry",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Grey",
+            "type": "Sedan",
+            "damage_direction": "Front-end",
+            "damage_level": "Moderate"
+        },
+        {
+            "color": "Black",
+            "type": "Unknown",
+            "damage_direction": "Driver-side",
+            "damage_level": "Moderate"
+        }
+    ],
+    "collision_type": "Side-impact",
+    "liability_indicator": {
+        "color" : "Grey",
+        "type": "Sedan",
+        "driver_major_behavior": "The left turning grey sedan not yield the right-of-way"
+    }
+}

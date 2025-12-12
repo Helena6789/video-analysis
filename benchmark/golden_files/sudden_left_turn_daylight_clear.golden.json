@@ -1,0 +1,34 @@
+{
+    "accident_summary": "A black sedan was traveling straight when it began making a left turn, and a collision occurred with a straight-moving vehicle behind it. Both vehicles were in motion at the time of the impact. Weather was clear, and the roadway was dry. Weather was clear and roadway conditions were dry",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Low"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Black",
+            "type": "Sedan",
+            "damage_direction": "Side-impact",
+            "damage_level": "Minor"
+        },
+        {
+            "color": "Unknown",
+            "type": "Unknown",
+            "damage_direction": "Front-end",
+            "damage_level": "Minor"
+        }
+    ],
+    "collision_type": "T-bone",
+    "liability_indicator": {
+        "color" : "Black",
+        "type": "Sedan",
+        "driver_major_behavior": "Improper left turn"
+    }
+}

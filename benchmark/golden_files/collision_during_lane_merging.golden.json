@@ -1,0 +1,34 @@
+{
+    "accident_summary": "In a slow-moving traffic on a bridge and on a two-lane road in the same direction, a construction vehicle was stopped in the right lane ahead, requiring traffic to merge into the left lane. A white SUV attempted to change lanes to the left and collided with the vehicle behind in that lane. Weather was clear, and the roadway was dry",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Highway"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Low"
+    },
+    "vehicles_involved": [
+        {
+            "color": "White",
+            "type": "SUV",
+            "damage_direction": "Side-damage",
+            "damage_level": "Minor"
+        },
+        {
+            "color": "Grey",
+            "type": "Sedan",
+            "damage_direction": "Side-damage",
+            "damage_level": "Minor"
+        }
+    ],
+    "collision_type": "Side-impact",
+    "liability_indicator": {
+        "color" : "White",
+        "type": "SUV",
+        "driver_major_behavior": "Unsafe lane change"
+    }
+}

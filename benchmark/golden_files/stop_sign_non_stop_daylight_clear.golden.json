@@ -1,0 +1,34 @@
+{
+    "accident_summary": "At a T-shaped intersection, a white semi-truck was preparing to enter the main roadway when it made contact with a silver semi-truck going straight through road. Weather was clear, and the roadway surface was dry.",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "White",
+            "type": "Semi-truck",
+            "damage_direction": "Side-impact",
+            "damage_level": "Moderate"
+        },
+        {
+            "color": "Silver",
+            "type": "Semi-truck",
+            "damage_direction": "Front-end",
+            "damage_level": "Moderate"
+        }
+    ],
+    "collision_type": "T-bone",
+    "liability_indicator": {
+        "color" : "White",
+        "type": "Semi-truck",
+        "driver_major_behavior": "Did not stop and check at the stop sign"
+    }
+}

@@ -51,9 +51,10 @@ ANALYZER_CATALOG = {
     "Gemini 3 Pro (Preview)": (VLMAnalyzer, {"model_name": "gemini-3-pro-preview"}),
     "Gemini 2.5 Pro": (VLMAnalyzer, {"model_name": "gemini-2.5-pro"}),
     "Nemotron Nano 12B 2 VL (Free)": (VLMAnalyzer, {"model_name": "nvidia/nemotron-nano-12b-v2-vl:free"}),
-    # "Qwen3 VL 8B Thinking": (VLMAnalyzer, {"model_name": "qwen/qwen3-vl-8b-thinking"}),
+    "Qwen3 VL 8B Thinking": (VLMAnalyzer, {"model_name": "qwen/qwen3-vl-8b-thinking"}),
     "Qwen3 VL 235B A22B Thinking": (VLMAnalyzer, {"model_name": "qwen/qwen3-vl-235b-a22b-thinking"}),
     "GPT-5.1": (VLMAnalyzer, {"model_name": "openai/gpt-5.1"}),
+    "GPT-5.2": (VLMAnalyzer, {"model_name": "openai/gpt-5.2"}),
     "OpenRouter - Gemini 2.5 Pro": (VLMAnalyzer, {"model_name": "google/gemini-2.5-pro"}),
     "OpenRouter - Gemini 3 Pro (Preview)": (VLMAnalyzer, {"model_name": "google/gemini-3-pro-preview"}),
 }
@@ -293,7 +294,7 @@ async def main():
         st.markdown("---")
         st.header("Analysis")
 
-        report_files = sorted([f for f in os.listdir("reports") if f.endswith(".json")], reverse=True)
+        report_files = sorted([f for f in os.listdir("reports") if f.endswith(".json")])
 
         for report_file in report_files:
             display_name = report_file.replace(".json", "")
@@ -335,7 +336,7 @@ async def run_new_analysis_ui():
     with col1:
         selected_models = st.multiselect("Select Model(s) for Comparison", options=list(ANALYZER_CATALOG.keys()), default=[])
     with col2:
-        judge_model = st.selectbox("Select Judge Model (for accuracy)", options=["nvidia/nemotron-nano-12b-v2-vl:free", "gemini-2.5-flash", "gemini-2.5-flash-lite"], index=0)
+        judge_model = st.selectbox("Select Judge Model (for accuracy)", options=["nvidia/nemotron-nano-12b-v2-vl:free", "gemini-2.5-flash", "gemini-2.5-flash-lite", "openai/gpt-5.1"], index=0)
 
     if any(model.startswith("Gemini") for model in selected_models) and not os.getenv("GEMINI_API_KEY"):
         st.warning("Please provide your Gemini API key in a `.env` file to use Gemini models.")

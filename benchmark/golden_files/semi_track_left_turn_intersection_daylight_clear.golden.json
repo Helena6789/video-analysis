@@ -1,0 +1,34 @@
+{
+    "accident_summary": "Two black cars collided at an intersection, one of the black semi-truck turning left failed to yield the right of way to the black sedan proceeding straight, resulting in a collision between the two vehicles. Weather was clear, and the road surface was dry",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Black",
+            "type": "Truck",
+            "damage_direction": "Front-end",
+            "damage_level": "Moderate"
+        },
+        {
+            "color": "Black",
+            "type": "Sedan",
+            "damage_direction": "Front-end",
+            "damage_level": "Moderate"
+        }
+    ],
+    "collision_type": "Front-End",
+    "liability_indicator": {
+        "color" : "Black",
+        "type": "Truck",
+        "driver_major_behavior": "The left turning not yield the right-of-way "
+    }
+}

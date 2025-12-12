@@ -1,0 +1,34 @@
+{
+    "accident_summary": "A silver truck failed to slow down sufficiently and rear-ended the silver Minivan in front. The weather was clear, and the road surface was dry",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Silver",
+            "type": "Truck",
+            "damage_direction": "Front-end",
+            "damage_level": "Moderate"
+        },
+        {
+            "color": "Silver",
+            "type": "Minivan",
+            "damage_direction": "Rear-end",
+            "damage_level": "Moderate"
+        }
+    ],
+    "collision_type": "Rear-end",
+    "liability_indicator": {
+        "color" : "Silver",
+        "type": "Truck",
+        "driver_major_behavior": "The silver truck failed to slow down appropriately, resulting in a rear-end collision."
+    }
+}

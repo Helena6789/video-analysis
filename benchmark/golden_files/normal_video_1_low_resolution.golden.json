@@ -1,0 +1,28 @@
+{
+    "accident_summary": "Normal driving scene at day, no accident happens",
+    "environmental_conditions": {
+        "time_of_day": "Day",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Street"
+    },
+    "human_factors": {
+        "pedestrians_involved": "N/A",
+        "potential_witnesses": "N/A",
+        "injury_risk": "N/A"
+    },
+    "vehicles_involved": [
+        {
+            "color": "N/A",
+            "type": "N/A",
+            "damage_direction": "N/A",
+            "damage_level": "N/A"
+        }
+    ],
+    "collision_type": "N/A",
+    "liability_indicator": {
+        "color" : "N/A",
+        "type": "N/A",
+        "driver_major_behavior": "N/A"
+    }
+}

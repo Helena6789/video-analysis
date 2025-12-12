@@ -1,0 +1,34 @@
+{
+    "accident_summary": "On a double solid yellow lines roadway, a red sedan was traveling in the opposite direction of traffic and entered the oncoming lane, where it made contact with a vehicle traveling in its proper lane. The incident occurred during daylight under clear weather and dry roadway conditions.",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Double solid yellow lines"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "No",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Red",
+            "type": "Sedan",
+            "damage_direction": "Front-end",
+            "damage_level": "Moderate"
+        },
+        {
+            "color": "Grey",
+            "type": "SUV",
+            "damage_direction": "Front-end",
+            "damage_level": "Severe"
+        }
+    ],
+    "collision_type": "Front-end",
+    "liability_indicator": {
+        "color" : "Red",
+        "type": "Sedan",
+        "driver_major_behavior": "Driving in the opposite direction of traffic"
+    }
+}

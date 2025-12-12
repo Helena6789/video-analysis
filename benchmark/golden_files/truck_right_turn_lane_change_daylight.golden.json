@@ -1,0 +1,34 @@
+{
+    "accident_summary": "A white truck was initiating a right turn when a straight-moving vehicle traveling behind it made contact with the truck. Both vehicles were in motion at the time of the collision. Weather was clear and roadway conditions were dry",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Moderate"
+    },
+    "vehicles_involved": [
+        {
+            "color": "White",
+            "type": "Truck",
+            "damage_direction": "Side-impact",
+            "damage_level": "Minor"
+        },
+        {
+            "color": "Unknown",
+            "type": "Unknown",
+            "damage_direction": "Front-end",
+            "damage_level": "Severe"
+        }
+    ],
+    "collision_type": "Side-impact",
+    "liability_indicator": {
+        "color" : "White",
+        "type": "Truck",
+        "driver_major_behavior": "Unsafe lane change"
+    }
+}

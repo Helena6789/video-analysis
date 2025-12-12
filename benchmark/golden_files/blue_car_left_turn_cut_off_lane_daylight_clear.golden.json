@@ -1,0 +1,34 @@
+{
+    "accident_summary": "Both vehicles were making simultaneous left turns at the intersection, each in its own designated turn lane. The blue SUV made an unsafe lane change and encroached into the adjacent lane, resulting in a collision. Weather was clear and roadway conditions were dry",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Low"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Blue",
+            "type": "SUV",
+            "damage_direction": "Rear-end",
+            "damage_level": "Minor"
+        },
+        {
+            "color": "White",
+            "type": "Unknown",
+            "damage_direction": "Front-end",
+            "damage_level": "Minor"
+        }
+    ],
+    "collision_type": "Side-impact",
+    "liability_indicator": {
+        "color" : "Blue",
+        "type": "SUV",
+        "driver_major_behavior": "Unsafe lane change"
+    }
+}

@@ -88,6 +88,14 @@ class VLMAnalyzer(AccidentAnalyzer):
         Your task is to analyze the provided video and return a structured JSON object with your findings.
         The JSON object must strictly adhere to the following detailed schema.
 
+        **CRITICAL INSTRUCTION FOR NORMAL DRIVING**: 
+        If the video depicts normal driving with **no collisions, accidents, or near-miss incidents**, you must:
+            1. Set `collision_type` to "N/A".
+            2. Set all fields inside `liability_indicator` to "N/A".
+            3. Set all fields inside `vehicles_involved` to "N/A".
+            4. Set all fields inside `human_factors` to "N/A".
+            5. In `accident_summary`, explicitly state "Normal driving observed; no accident occurred."
+
         **IMPORTANT**: For any field where the information is not available or cannot be determined from the video, you **must** use a specific string like 'Unknown', 'Not Visible', or 'N/A'. **Do not omit any fields.**
 
         {{
@@ -96,8 +104,8 @@ class VLMAnalyzer(AccidentAnalyzer):
             {{
               "vehicle_id": "An optional identifier, e.g., 'A', 'B'",
               "color": "e.g., 'Blue', 'White', 'Black', 'Unknown'",
-              "type": "e.g., 'Sedan', 'SUV', 'Truck', "Bus", "Road vehicle", 'Unknown'",
-              "damage_direction": "e.g., 'Front-end', 'Rear-end', 'Driver-side', 'Unknown'",
+              "type": "e.g., 'Sedan', 'SUV', 'Truck', "Bus", "Road vehicle", 'Jeep', 'Semi-truck', 'Minivan', 'Unknown'",
+              "damage_direction": "e.g., 'Front-end', 'Rear-end', 'Driver-side', 'Side-impact', 'Unknown'",
               "damage_level": "Choose one: 'None', 'Minor', 'Moderate', 'Severe', 'Unknown'"
             }}
           ],
@@ -117,7 +125,7 @@ class VLMAnalyzer(AccidentAnalyzer):
             "potential_witnesses": "Choose one: 'Yes', 'No', 'Unknown'",
             "injury_risk": "Choose one: 'Low', 'Medium', 'High', 'Unknown'"
           }},
-          "collision_type": "Standard insurance term, e.g., 'Rear-End', 'T-Bone', or 'Unknown'",
+          "collision_type": "Standard insurance term, e.g., 'Rear-End', 'T-Bone', 'Side-impact', or 'Unknown'",
           "traffic_controls_present": ["List of traffic controls observed. If none, return an empty list []"],
           "recommended_action": "Next steps for the claims adjuster. If no specific action, state 'Standard procedure'.",
           "reasoning_trace": [

@@ -1,0 +1,34 @@
+{
+    "accident_summary": "A silver sedan ran a red light at an intersection at night and struck a black SUV. The road surface was dry at the time of the collision, and no other vehicles or pedestrians were involved",
+    "environmental_conditions": {
+        "time_of_day": "Night",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "White",
+            "type": "Sedan",
+            "damage_direction": "Front-end",
+            "damage_level": "Moderate"
+        },
+        {
+            "color": "Black",
+            "type": "SUV",
+            "damage_direction": "Driver-side",
+            "damage_level": "Moderate"
+        }
+    ],
+    "collision_type": "T-Bone",
+    "liability_indicator": {
+        "color" : "White",
+        "type": "Sedan",
+        "driver_major_behavior": "Beat the red light"
+    }
+}

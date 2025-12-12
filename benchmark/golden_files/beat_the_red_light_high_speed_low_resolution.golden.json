@@ -1,0 +1,34 @@
+{
+    "accident_summary": "A light-colored sedan, proceeding through an intersection with a green light, was struck by a dark-colored SUV that failed to stop for a red light. The initial side-impact collision caused the SUV to lose control and crash into a traffic light pole. The road surface was wet",
+    "environmental_conditions": {
+        "time_of_day": "Night",
+        "weather": "Rainy",
+        "road_conditions": "Wet",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Unknown",
+        "injury_risk": "High"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Grey",
+            "type": "SUV",
+            "damage_direction": "Front-end",
+            "damage_level": "Severe"
+        },
+        {
+            "color": "Silver",
+            "type": "Sedan",
+            "damage_direction": "Side-impact",
+            "damage_level": "Severe"
+        }
+    ],
+    "collision_type": "T-bone",
+    "liability_indicator": {
+        "color" : "Grey",
+        "type": "SUV",
+        "driver_major_behavior": "Ran a red light."
+    }
+}

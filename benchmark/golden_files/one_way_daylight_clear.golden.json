@@ -1,0 +1,34 @@
+{
+    "accident_summary": "On a one-way street, a black SUV was traveling in the wrong direction and collided head-on with a silver sedan. Weather was clear, and the roadway was dry",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "One-way street"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Low"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Black",
+            "type": "SUV",
+            "damage_direction": "Front-end",
+            "damage_level": "Minor"
+        },
+        {
+            "color": "Silver",
+            "type": "Sedan",
+            "damage_direction": "Side-damage",
+            "damage_level": "Minor"
+        }
+    ],
+    "collision_type": "T-bone",
+    "liability_indicator": {
+        "color" : "Black",
+        "type": "SUV",
+        "driver_major_behavior": "Traveling against traffic"
+    }
+}

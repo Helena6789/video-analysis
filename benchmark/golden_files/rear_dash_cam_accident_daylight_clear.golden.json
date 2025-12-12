@@ -1,0 +1,34 @@
+{
+    "accident_summary": "At a small intersection with no traffic signals, a collision occurred between a black sedan traveling straight and a silver vehicle crossing the roadway",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Clear",
+        "road_conditions": "Dry",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "Medium"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Silver",
+            "type": "Minivan",
+            "damage_direction": "Side-damage",
+            "damage_level": "Medium"
+        },
+        {
+            "color": "Black",
+            "type": "Sedan",
+            "damage_direction": "Front-end",
+            "damage_level": "Medium"
+        }
+    ],
+    "collision_type": "T-Bone",
+    "liability_indicator": {
+        "color" : "Silver",
+        "type": "Minivan",
+        "driver_major_behavior": "Improper roadway crossing"
+    }
+}

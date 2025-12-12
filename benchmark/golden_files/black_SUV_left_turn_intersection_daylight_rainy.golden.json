@@ -1,0 +1,34 @@
+{
+    "accident_summary": "During daylight and rainy conditions, the road was slippery. At an intersection, a black SUV, attempting to make a left turn at intersection failed to yield oncoming traffic. it was stuck on the passenger side by another black SUV proceeding straight through the intersection, causing the turning vehicle to roll over onto the roadside.",
+    "environmental_conditions": {
+        "time_of_day": "Daylight",
+        "weather": "Rainy",
+        "road_conditions": "Wet",
+        "location_type": "Intersection"
+    },
+    "human_factors": {
+        "pedestrians_involved": "No",
+        "potential_witnesses": "Yes",
+        "injury_risk": "High"
+    },
+    "vehicles_involved": [
+        {
+            "color": "Black",
+            "type": "SUV",
+            "damage_direction": "Front-end",
+            "damage_level": "Moderate"
+        },
+        {
+            "color": "Black",
+            "type": "SUV",
+            "damage_direction": "Side-impact",
+            "damage_level": "Moderate"
+        }
+    ],
+    "collision_type": "T-Bone",
+    "liability_indicator": {
+        "color" : "Black",
+        "type": "SUV",
+        "driver_major_behavior": "Failure yield on left turn"
+    }
+}
