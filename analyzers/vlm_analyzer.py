@@ -49,7 +49,6 @@ class VLMAnalyzer(AccidentAnalyzer):
             latency = end_time - start_time
 
             # 2. Input Tokens & Cost
-            latency = end_time - start_time
             video_duration = await asyncio.to_thread(lambda: VideoFileClip(video_path).duration)
             video_tokens = int(video_duration * video_token_per_second(self.model_name))
             input_tokens = video_tokens + len(tokenizer.encode(prompt))

@@ -16,7 +16,7 @@ def recalculate_sync_scores(reports_dir, golden_dir):
         golden_dir (str): Path to the directory containing golden JSON files.
     """
     for report_file in os.listdir(reports_dir):
-        if report_file.endswith("stop_sign_non_stop_daylight_clear_analysis_20251210_211752.json"):
+        if report_file.endswith(".json"):
             report_path = os.path.join(reports_dir, report_file)
 
             # Extract the base name to find the corresponding golden file
@@ -45,9 +45,8 @@ def recalculate_sync_scores(reports_dir, golden_dir):
                         from core.schemas import AnalysisResult
                         result_obj = AnalysisResult(**result)
                         sync_scores = evaluate_sync_metrics(result_obj, golden_data)
+                        print(f"Updating score from: {model_data['sync_scores']} to {sync_scores} for model {model_name} in {report_file}")
                         model_data["sync_scores"] = sync_scores
-                        print(sync_scores)
-                        print(f"Updated sync_scores for model {model_name} in {report_file}.")
                     except Exception as e:
                         print(f"Error recalculating sync_scores for model {model_name} in {report_file}: {e}")
 

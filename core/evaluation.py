@@ -30,13 +30,31 @@ tokenizer = tiktoken.get_encoding("cl100k_base")
 
 # --- Part 1: Synchronous, Objective Metrics ---
 
-def _calculate_attribute_similarity(model_vehicle: dict, golden_vehicle: dict) -> float:
-    """Calculates a weighted similarity score between two vehicle attribute dicts."""
+def _calculate_attribute_similarity(model_data, golden_data: dict, weights: dict) -> float:
+    """
+    Calculates a weighted similarity score between model output (dict or object) and golden data (dict).
+
+    Args:
+        model_data: The prediction data (can be a Pydantic model or a dict).
+        golden_data: The ground truth dictionary.
+        weights: A dictionary mapping field names to their score weights.
+
+    Returns:
+        float: The accumulated weighted score.
+    """
     score = 0.0
-    weights = {"color": 0.3, "type": 0.3, "damage_direction": 0.1, "damage_level": 0.1, "dashcam_vehicle": 0.2}
 
     for key, weight in weights.items():
-        if model_vehicle.get(key, "").lower() == golden_vehicle.get(key, "").lower():
+        # Retrieve value from model_data (handle both Pydantic objects and dicts)
+        if isinstance(model_data, dict):
+            model_val = model_data.get(key, "")
+        else:
+            model_val = getattr(model_data, key, "")
+
+        # Retrieve value from golden_data
+        golden_val = golden_data.get(key, "")
+
+        if str(model_val).strip().lower() == str(golden_val).strip().lower():
             score += weight
     return score
 
@@ -57,6 +75,15 @@ def evaluate_vehicle_score(model_vehicles: list, golden_vehicles: list) -> float
     match_scores = []
     model_vehicles_copy = [v.model_dump() for v in model_vehicles]
 
+    # Define weights for vehicle attributes
+    vehicle_weights = {
+        "color": 0.3,
+        "type": 0.3,
+        "damage_direction": 0.1,
+        "damage_level": 0.1,
+        "dashcam_vehicle": 0.2
+    }
+
     # For each ground truth vehicle, find its best match in the model's predictions.
     for golden_vehicle in golden_vehicles:
         if not model_vehicles_copy:
@@ -67,7 +94,7 @@ def evaluate_vehicle_score(model_vehicles: list, golden_vehicles: list) -> float
         best_match_score = -1
         best_match_index = -1
         for i, model_vehicle in enumerate(model_vehicles_copy):
-            score = _calculate_attribute_similarity(model_vehicle, golden_vehicle)
+            score = _calculate_attribute_similarity(model_vehicle, golden_vehicle, vehicle_weights)
             if score > best_match_score:
                 best_match_score = score
                 best_match_index = i
@@ -81,43 +108,85 @@ def evaluate_vehicle_score(model_vehicles: list, golden_vehicles: list) -> float
     # The final score is the average of the best-match scores for each golden vehicle.
     return np.mean(match_scores) if match_scores else 0.0
 
+def evaluate_environment_score(model_env, golden_env: dict) -> float:
+    """
+    Calculates a weighted score for environmental conditions.
+    Uses METEOR score for semantic fields (time, location) and exact match for others.
+    """
+    score = 0.0
+
+    # 1. Exact Matches (Weather, Road Conditions)
+    exact_weights = {
+        "weather": 0.25,
+        "road_conditions": 0.25
+    }
+    score += _calculate_attribute_similarity(model_env, golden_env, exact_weights)
+
+    # 2. Semantic Matches (Time of Day, Location Type) using METEOR
+    meteor_weights = {
+        "time_of_day": 0.25,
+        "location_type": 0.25
+    }
+
+    for field, weight in meteor_weights.items():
+        # Retrieve normalized values
+        golden_val = golden_env.get(field, "").strip().lower()
+
+        if isinstance(model_env, dict):
+            cand_val = model_env.get(field, "").strip().lower()
+        else:
+            cand_val = getattr(model_env, field, "").strip().lower()
+
+        # Optimization: Check for exact equality before using METEOR for efficiency
+        if cand_val == golden_val:
+            score += weight
+        else:
+            ref = [word_tokenize(golden_val)]
+            cand = word_tokenize(cand_val)
+            score += weight * meteor_score(ref, cand)
+
+    return score
+
 def evaluate_liability_score(model_liability, golden_liability: dict) -> float:
     """Calculates a weighted similarity score for the liability indicator."""
     score = 0.0
-    weights = {"driver_major_behavior": 0.4, "color": 0.2, "type": 0.2, "dashcam_vehicle": 0.2}
 
-    ref = [word_tokenize(golden_liability["driver_major_behavior"].lower())]
+    # 1. Calculate score for the complex text field (METEOR score)
+    behavior_weight = 0.4
+    ref = [word_tokenize(golden_liability.get("driver_major_behavior", "").lower())]
     cand = word_tokenize(model_liability.driver_major_behavior.lower())
-    score += weights["driver_major_behavior"] * meteor_score(ref, cand)
+    score += behavior_weight * meteor_score(ref, cand)
 
-    if model_liability.color.lower() == golden_liability["color"].lower():
-        score += weights["color"]
-    if model_liability.type.lower() == golden_liability["type"].lower():
-        score += weights["type"]
-    if model_liability.dashcam_vehicle.lower() == golden_liability["dashcam_vehicle"].lower():
-        score += weights["dashcam_vehicle"]
+    # 2. Calculate score for simple categorical fields using the common function
+    simple_weights = {
+        "color": 0.2,
+        "type": 0.2,
+        "dashcam_vehicle": 0.2
+    }
+    score += _calculate_attribute_similarity(model_liability, golden_liability, simple_weights)
 
     return score
 
 def evaluate_sync_metrics(model_result: AnalysisResult, golden_data: dict) -> dict:
     """Generates a domain-driven scorecard for all synchronous metrics."""
 
-    # --- Environment Score (F1) ---
-    env_golden = golden_data["environmental_conditions"]
-    env_model = model_result.environmental_conditions
-    env_f1 = f1_score(
-        list(env_golden.values()),
-        [env_model.time_of_day, env_model.weather, env_model.road_conditions, env_model.location_type],
-        average='weighted', zero_division=0
+    # --- Environment Score (Weighted METEOR/Match) ---
+    env_score = evaluate_environment_score(
+        model_result.environmental_conditions,
+        golden_data["environmental_conditions"]
     )
 
     # --- Human Factors Score (Weighted Accuracy) ---
-    hf_golden = golden_data["human_factors"]
-    hf_model = model_result.human_factors
-    injury_score = 1.0 if hf_model.injury_risk.lower() == hf_golden["injury_risk"].lower() else 0.0
-    peds_score = 1.0 if hf_model.pedestrians_involved.lower() == hf_golden["pedestrians_involved"].lower() else 0.0
-    witness_score = 1.0 if hf_model.potential_witnesses.lower() == hf_golden["potential_witnesses"].lower() else 0.0
-    human_factors_score = (0.6 * injury_score) + (0.3 * peds_score) + (0.1 * witness_score)
+    hf_weights = {
+        "injury_risk": 0.6,
+        "pedestrians_involved": 0.3,
+        "potential_witnesses": 0.1
+    }
+    human_factors_score = _calculate_attribute_similarity(
+        model_result.human_factors,
+        golden_data["human_factors"],
+        hf_weights
+    )
 
     # --- Vehicle Score (Average Match Quality) ---
     vehicle_score = evaluate_vehicle_score(
@@ -138,7 +207,7 @@ def evaluate_sync_metrics(model_result: AnalysisResult, golden_data: dict) -> di
     summary_meteor = meteor_score(summary_ref, summary_cand)
 
     return {
-        "environment_score": env_f1,
+        "environment_score": env_score,
         "human_factors_score": human_factors_score,
         "vehicle_score": vehicle_score,
         "liability_score": liability_score,
