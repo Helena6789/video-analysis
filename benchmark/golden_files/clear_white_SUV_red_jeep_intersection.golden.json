@@ -1,8 +1,8 @@
 {
-    "accident_summary": "Two cars collided at an intersection, one of the white SUV turning left failed to yield the right of way to the red jeep proceeding straight, resulting in a collision between the two vehicles. Weather was a little bit rainy, and the road surface was dry",
+    "accident_summary": "Two cars collided at an intersection, one of the white SUV turning left failed to yield the right of way to the red jeep proceeding straight, resulting in a collision between the two vehicles. Weather was clear, and the road surface was dry",
     "environmental_conditions": {
         "time_of_day": "Daylight",
-        "weather": "Rainy",
+        "weather": "Clear",
         "road_conditions": "Dry",
         "location_type": "Intersection"
     },

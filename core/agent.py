@@ -9,6 +9,26 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
 
+
+# --- Agent initial state Definitions ---
+
+def get_initial_state(result: str, driver_name = "John Doe") -> AgentState:
+    # Prepare the initial message for the agent
+    initial_prompt = f"""
+    You are an AI Claims Assistant. You have just received a structured analysis of a car accident video.
+    Your goal is to enrich this data using your available tools and provide a final, augmented recommendation and fraud risk assessment.
+
+    ** Critical Instuctions::** 
+    - Make sure verify policy coverage first before checking claim history.
+
+    **Driver Name:** {driver_name}
+
+    **VLM Analysis:**
+    {result}
+
+    """
+    return {"messages": [("user", initial_prompt)]}
+
 # --- Tool Definitions ---
 
 @tool

@@ -11,6 +11,7 @@ from core.schemas import AnalysisResult
 from core.evaluation import evaluate_sync_metrics, evaluate_llm_judge_metrics_async
 from core.exporter import create_pdf_report
 from core.agent import app as agent_app
+from core.agent import get_initial_state
 from utils.llm_client import GeminiClient
 from utils.video_utils import extract_frames_as_base64, video_base64_encoding
 
@@ -68,9 +69,9 @@ def display_accuracy_scorecard(sync_scores, judge_scores):
     # --- Domain & Objective Scores ---
     col1, col2, col3, col4 = st.columns(4)
     col1.metric(
-        "Environment (F1)",
+        "Environment Score",
         f"{sync_scores['environment_score']:.2f}",
-        help="F1-Score for time_of_day, weather, road_conditions, and location_type."
+        help="Weighted score for time_of_day (25%), weather (25%), road_conditions (25%), and location_type (25%)."
     )
     col2.metric(
         "Human Factors",
@@ -428,20 +429,9 @@ async def display_ai_assistant_ui(result, model_name):
         st.markdown("##### 🤖 AI Claims Assistant Results")
         final_state = None
         with st.expander("Show Agent's Thought Process", expanded=True):
-            # Prepare the initial message for the agent
-            initial_prompt = f"""
-            You are an AI Claims Assistant. You have just received a structured analysis of a car accident video.
-            Your goal is to enrich this data using your available tools and provide a final, augmented recommendation and fraud risk assessment.
-
-            **VLM Analysis:**
-            {json.dumps(result.model_dump(), indent=2)}
-
-            """
-            initial_state = {"messages": [("user", initial_prompt)]}
-            
             st.markdown("- **Running Too-Usering Agent...**")
             # Stream the graph execution
-            for step in agent_app.stream(initial_state):
+            for step in agent_app.stream(get_initial_state(json.dumps(result.model_dump(), indent=2))):
                 node_name = list(step.keys())[0]
                 # We don't need to show the full state, just the node name
                 st.markdown(f"- **Running Node:** `{node_name}`")
