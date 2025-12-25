@@ -31,10 +31,29 @@ st.markdown("""
         display: block !important;
         width: 100%;
     }
-    [data-testid="stSidebar"] .stButton>button:hover {
+
+    /* UNSELECTED (Secondary) - Transparent */
+    [data-testid="stSidebar"] .stButton > button[kind="secondary"] {
+        background-color: transparent;
+        color: inherit;
+    }
+    [data-testid="stSidebar"] .stButton > button[kind="secondary"]:hover {
         background-color: #eee;
         color: #000;
     }
+
+    /* SELECTED (Primary) - Deep Blue */
+    [data-testid="stSidebar"] .stButton > button[kind="primary"] {
+        background-color: #1565C0 !important; /* Deep Blue */
+        color: white !important; /* White text for contrast */
+        font-weight: 600;
+        border: none;
+    }
+    [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
+        background-color: #0D47A1 !important; /* Even darker on hover */
+        color: white !important;
+    }
+
     .stDownloadButton>button {
         background-color: #4CAF50; /* Green */
         color: white;
@@ -301,7 +320,11 @@ async def main():
 
         for report_file in report_files:
             display_name = report_file.replace(".json", "")
-            if st.button(display_name, key=report_file, use_container_width=True):
+
+            # Use 'primary' style for active, 'secondary' for others
+            is_active = st.session_state.get("selected_report") == report_file
+            btn_type = "primary" if is_active else "secondary"
+            if st.button(display_name, key=report_file, type=btn_type, use_container_width=True):
                 st.session_state.selected_report = report_file
                 try:
                     with open(os.path.join("reports", report_file), "r") as f:
