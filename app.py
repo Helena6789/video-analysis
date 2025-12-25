@@ -295,7 +295,9 @@ async def main():
         st.markdown("---")
         st.header("Analysis")
 
-        report_files = sorted([f for f in os.listdir("reports") if f.endswith(".json")])
+        # Sort by the date and time extracted from the filename
+        report_files = [f for f in os.listdir("reports") if f.endswith(".json")]
+        report_files = sorted(report_files, key=lambda x: x.split('.')[0].split('_')[-2:], reverse=True)
 
         for report_file in report_files:
             display_name = report_file.replace(".json", "")
