@@ -286,7 +286,15 @@
                         <span class="metric-value">{{ "%.2f"|format(sync_scores.liability_score) }}</span>
                     </div>
                     <div class="metric-item">
-                        <span class="metric-label">Rating</span>
+                        <span class="metric-label">Summary BLEU</span>
+                        <span class="metric-value">{{ "%.2f"|format(sync_scores.summary_bleu) }}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Summary METEOR</span>
+                        <span class="metric-value">{{ "%.2f"|format(sync_scores.summary_meteor) }}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Summary Rating</span>
                         <span class="metric-value">{{ judge_scores.summary_rating }}/100</span>
                     </div>
                     {% endif %}
