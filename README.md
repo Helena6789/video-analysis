@@ -55,6 +55,7 @@ This repository contains a **Streamlit-based application** for analyzing vehicle
 - **`utils/`**: Utility functions for video processing and API interactions.
 - **`benchmark/`**: Ground truth data for model evaluation.
 - **`reports/`**: Generated analysis reports.
+- **`summary/`**: Summary performance for generated analysis reports.
 - **`templates/`**: HTML templates for report generation.
 
 ---
@@ -66,6 +67,7 @@ This repository contains a **Streamlit-based application** for analyzing vehicle
 - **Nemotron Nano 12B 2 VL (Free)**
 - **Qwen3 VL 235B A22B Thinking**
 - **GPT-5.1**
+- **GPT-5.2**
 - **OpenRouter Models**
 
 
