@@ -481,7 +481,16 @@ async def display_ai_assistant_ui(result, model_name):
 async def display_results_ui(results_data, judge_model):
     """Renders the results from a saved report or a new analysis."""
     st.header("Analysis Comparison")
-    st.info(f"Displaying results for **{results_data['video_filename']}**")
+
+    # --- Video Preview ---
+    video_path = os.path.join("videos", results_data['video_filename'])
+    if os.path.exists(video_path):
+        st.caption(f"Analyzing: {results_data['video_filename']}")
+        _, col_vid, _ = st.columns([0.2, 0.6, 0.2])
+        with col_vid:
+            st.video(video_path)
+    else:
+        st.info(f"Displaying results for **{results_data['video_filename']}**, but the original video file is not available.")
 
     # --- Display Saved Configuration ---
     st.markdown("##### Configuration Used")
