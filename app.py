@@ -444,17 +444,40 @@ async def run_new_analysis_ui():
                     status.update(label="All tasks complete!", state="complete")
                     st.rerun()
 
-async def display_ai_assistant_ui(result, model_name):
-    """Renders the UI for the AI Claims Assistant."""
-    st.markdown('<div class="ai-assistant-button">', unsafe_allow_html=True)
-    run_button = st.button("🤖 Run AI Claims Assistant", key=f"agent_button_{model_name}", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+# --- AI Agent Assistant UI ---
+def serialize_agent_state(state_update):
+    """Converts LangChain message objects into their string representation."""
+    clean_state = state_update.copy()
 
-    if run_button:
-        st.markdown("##### 🤖 AI Claims Assistant Results")
-        final_state = None
-        with st.expander("Show Agent's Thought Process", expanded=True):
-            st.markdown("- **Running Too-Usering Agent...**")
+    if "messages" in clean_state:
+        clean_messages = []
+        for m in clean_state["messages"]:
+            clean_messages.append(repr(m))
+        clean_state["messages"] = clean_messages
+    return clean_state
+
+def save_agent_execution(model_name, final_content, thought_process_log):
+    """Saves the agent's execution results to session state and disk."""
+    st.session_state.results["models"][model_name]["agent_results"] = final_content
+    st.session_state.results["models"][model_name]["agent_thought_process"] = thought_process_log
+
+    report_filename = f"{st.session_state.results['report_id']}.json"
+    try:
+        with open(os.path.join("reports", report_filename), "w") as f:
+            json.dump(st.session_state.results, f, indent=4)
+        st.toast("Agent results updated and saved to report.")
+    except Exception as e:
+        st.error(f"Failed to save to report file: {e}")
+
+async def execute_agent_flow(result, model_name):
+    """Runs the agent, streams output to UI, and triggers saving."""
+    st.markdown("##### 🤖 AI Claims Assistant Results")
+    final_state = None
+    thought_process_log = []
+
+    with st.expander("Show Agent's Thought Process", expanded=True):
+        st.markdown("- **Running Agent...**")
+        try:
             # Stream the graph execution
             for step in agent_app.stream(get_initial_state(json.dumps(result.model_dump(), indent=2))):
                 node_name = list(step.keys())[0]
@@ -463,17 +486,50 @@ async def display_ai_assistant_ui(result, model_name):
                 st.json(step[node_name], expanded=False)
                 final_state = step[node_name]
 
-        if final_state:
-            st.markdown("###### Final Results")
-            final_content = final_state["messages"][-1].content
-            st.markdown(final_content)
+                # Log the CLEAN state for saving
+                thought_process_log.append({
+                    "node": node_name,
+                    "state":  serialize_agent_state(final_state)
+                })
+        except Exception as e:
+            st.error(f"Error running agent: {e}")
+            return
 
-            # --- Save Agent Results to Session State & Reports
-            st.session_state.results["models"][model_name]["agent_results"] = final_content
-            report_filename = f"{st.session_state.results['report_id']}.json"
-            with open(os.path.join("reports", report_filename), "w") as f:
-                json.dump(st.session_state.results, f, indent=4)
-            st.toast("Agent results save to report.")
+    if final_state:
+        st.markdown("###### Final Results")
+        final_content = final_state["messages"][-1].content
+        st.markdown(final_content)
+
+        save_agent_execution(model_name, final_content, thought_process_log)
+
+def render_existing_agent_results(existing_results, existing_thought_process):
+    """Renders previously saved agent results."""
+    st.markdown("##### 🤖 AI Claims Assistant Results")
+    if existing_thought_process:
+        with st.expander("Show Agent's Thought Process", expanded=False):
+            for step in existing_thought_process:
+                st.markdown(f"- **Node:** `{step['node']}`")
+                st.json(step['state'], expanded=False)
+
+    st.markdown("###### Final Results")
+    st.markdown(existing_results)
+
+async def display_ai_assistant_ui(result, model_name):
+    """Renders the UI for the AI Claims Assistant (Main Entry Point)."""
+    st.markdown('<div class="ai-assistant-button">', unsafe_allow_html=True)
+    run_button = st.button("🤖 Run AI Claims Assistant", key=f"agent_button_{model_name}", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Retrieve Data
+    model_data = st.session_state.results["models"].get(model_name, {})
+    existing_results = model_data.get("agent_results")
+    existing_thought_process = model_data.get("agent_thought_process")
+
+    # Decision Logic
+    if run_button:
+        await execute_agent_flow(result, model_name)
+    elif existing_results:
+        render_existing_agent_results(existing_results, existing_thought_process)
 
     st.markdown("---")
 
