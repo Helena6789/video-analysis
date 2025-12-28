@@ -1,4 +1,4 @@
-# tools/init_db.py
+# tools/init_claims_db.py
 import sqlite3
 import os
 

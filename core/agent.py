@@ -4,9 +4,10 @@ import json
 import os
 import sqlite3
 from typing import TypedDict, Annotated, List
+from langchain_chroma import Chroma
 from langchain_core.tools import tool
 from langchain_core.messages import BaseMessage, ToolMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
 
@@ -46,6 +47,39 @@ def policy_lookup_tool(collision_type: str) -> str:
             return f"Finding: Could not confirm coverage for '{collision_type}' in the policy document."
     except FileNotFoundError:
         return "Error: Policy document not found."
+
+
+@tool
+def policy_lookup_tool_rag(query: str) -> str:
+    """
+    Semantically searches the policy document to check coverage.
+    Args:
+        query: The question or collision description (e.g., "Is hitting a mailbox covered?").
+    """
+    vector_db_dir = "knowledge_base/policy_vector_store"
+
+    try:
+        # 1. Connect to the existing Vector Store
+        embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        db = Chroma(persist_directory=vector_db_dir, embedding_function=embeddings)
+
+        # 2. Perform Similarity Search (Get top 2 most relevant sections)
+        results = db.similarity_search_with_relevance_scores(query, k=2)
+
+        # 3. Format the context for the Agent
+        print(f"Similarity search results for query '{query}' and results: {results}")
+        valid_docs = [doc.page_content for doc, score in results if score > 0.55]
+
+        if not valid_docs:
+            return (f"Finding: I searched the policy for '{query}', but found no relevant coverage clauses. "
+                    "This specific scenario may not be explicitly mentioned in the policy.")
+
+        context = "\n\n".join(valid_docs)
+
+        return f"Finding: Based on the policy sections found:\n'{context}'\n(Please analyze if this covers the '{query}')"
+
+    except Exception as e:
+        return f"Error searching policy: {e}"
 
 @tool
 def claims_history_tool(at_fault_driver_name: str, collision_type: str, vehicle_vin: str = None) -> str:
@@ -101,7 +135,7 @@ class AgentState(TypedDict):
     messages: Annotated[List[BaseMessage], lambda x, y: x + y]
 
 # --- LLM and Tool Definitions ---
-tools = [policy_lookup_tool, claims_history_tool]
+tools = [policy_lookup_tool_rag, claims_history_tool]
 tool_map = {tool.name : tool for tool in tools}
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.environ["GEMINI_API_KEY"], temperature=0)
 llm_with_tools = llm.bind_tools(tools)

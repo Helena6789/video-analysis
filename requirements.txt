@@ -7,6 +7,8 @@ tiktoken
 scikit-learn
 nltk
 langchain
+langchain-chroma
+langchain-community
 langgraph
 langchain-google-genai
 Jinja2

@@ -4,10 +4,14 @@
 - 2022 White SUV (VIN: ...123)
 - 2021 Blue Sedan (VIN: ...456)
 
-**Section 2: Liability Coverage**
-- 2.1: Bodily injury and property damage to others resulting from a collision where the insured driver is at fault is covered. This includes rear-end collisions, sideswipes, side-impact, T-Bone, and intersection-related faults.
-- 2.2: Incidents resulting from illegal activities (e.g., street racing) are excluded.
-- 2.3: Intentional damage is excluded.
+**Section 2: Liability Coverage (At-Fault)**
+- 2.1: We cover bodily injury and property damage to OTHERS when the insured driver is legally liable (at fault).
+- 2.2: Covered accident types include: Rear-end collisions, T-Bone (Side-Impact), Sideswipes, and Intersection accidents.
+- 2.3: Exclusions: Incidents resulting from illegal activities (e.g., street racing) or intentional acts are NOT covered.
 
-**Section 3: Collision Coverage**
-- 3.1: Damage to the insured's vehicle from a collision is covered, subject to a $500 deductible.
+**Section 3: Collision Coverage (Damage to Your Car)**
+- 3.1: We pay for damage to the insured vehicle caused by a collision with another vehicle or object, regardless of fault.
+- 3.2: If another driver is at fault (e.g., they T-Bone you), this policy covers your repairs initially, subject to a $500 deductible, while we pursue the other driver's insurance (Subrogation).
+
+**Section 4: Uninsured/Underinsured Motorist**
+- 4.1: If the insured vehicle is hit by a driver who is at fault but has no insurance (or unknown, e.g., Hit and Run), this policy provides coverage for bodily injury and vehicle repairs.
