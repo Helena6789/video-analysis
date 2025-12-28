@@ -388,7 +388,7 @@ async def run_new_analysis_ui():
                 golden_data = None
 
         with st.expander("🎬 Preview Video", expanded=False):
-            _, video_col, _ = st.columns([0.4, 0.2, 0.4])
+            _, video_col, _ = st.columns([0.2, 0.6, 0.2])
             with video_col:
                 st.video(video_path)
         analyze_button = st.button("Analyze Video", type="primary", key="analyze_button")
