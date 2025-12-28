@@ -1,0 +1,16 @@
+streamlit==1.52.2
+pydantic==2.12.5
+google-generativeai==0.8.6
+python-dotenv==1.2.1
+moviepy==2.2.1
+tiktoken==0.12.0
+scikit-learn==1.8.0
+nltk==3.9.2
+langchain==1.2.0
+langgraph==1.0.5
+langchain-google-genai==4.1.2
+Jinja2==3.1.6
+WeasyPrint==67.0
+langchain-openai==1.1.6
+opencv-python==4.12.0.88
+pandas==2.3.3

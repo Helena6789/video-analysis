@@ -13,7 +13,7 @@ from langgraph.prebuilt import ToolNode
 
 # --- Agent initial state Definitions ---
 
-def get_initial_state(result: str, driver_name = "John Doe") -> AgentState:
+def get_initial_state(result: str, driver_name = "John Doe") -> dict:
     # Prepare the initial message for the agent
     initial_prompt = f"""
     You are an AI Claims Assistant. You have just received a structured analysis of a car accident video.

@@ -27,6 +27,7 @@ This repository contains a **Streamlit-based application** for analyzing vehicle
    ```bash
    pip install -r requirements.txt
    ```
+   Note: it would be better using python 3.11+.
 
 3. Set up environment variables:
    - Create a `.env` file in the root directory.

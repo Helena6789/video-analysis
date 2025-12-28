@@ -469,6 +469,20 @@ def save_agent_execution(model_name, final_content, thought_process_log):
     except Exception as e:
         st.error(f"Failed to save to report file: {e}")
 
+def extract_clean_text(message):
+    """
+    Helper to extract text from a message, handling both String and List formats.
+    Newer LangChain versions return content as a list of blocks (e.g., [{'type': 'text'...}]).
+    """
+    content = message.content if hasattr(message, "content") else message.get("content", "")
+    if isinstance(content, list):
+        return "".join([
+            block.get("text", "")
+            for block in content
+            if isinstance(block, dict) and block.get("type") == "text"
+        ])
+    return str(content)
+
 async def execute_agent_flow(result, model_name):
     """Runs the agent, streams output to UI, and triggers saving."""
     st.markdown("##### 🤖 AI Claims Assistant Results")
@@ -497,7 +511,7 @@ async def execute_agent_flow(result, model_name):
 
     if final_state:
         st.markdown("###### Final Results")
-        final_content = final_state["messages"][-1].content
+        final_content = extract_clean_text(final_state["messages"][-1])
         st.markdown(final_content)
 
         save_agent_execution(model_name, final_content, thought_process_log)
