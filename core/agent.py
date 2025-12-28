@@ -2,6 +2,7 @@
 import pandas as pd
 import json
 import os
+import sqlite3
 from typing import TypedDict, Annotated, List
 from langchain_core.tools import tool
 from langchain_core.messages import BaseMessage, ToolMessage
@@ -47,24 +48,52 @@ def policy_lookup_tool(collision_type: str) -> str:
         return "Error: Policy document not found."
 
 @tool
-def claims_history_tool(at_fault_driver_name: str, collision_type: str) -> str:
+def claims_history_tool(at_fault_driver_name: str, collision_type: str, vehicle_vin: str = None) -> str:
     """
-    Searches the claims history CSV to find prior at-fault claims for a specific driver and collision type.
+    Queries the internal claims SQL database to find prior at-fault claims.
+    Args:
+        at_fault_driver_name: Name of the driver.
+        collision_type: Type of collision (e.g., 'Rear-End').
+        vehicle_vin: (Optional) The last few digits of the VIN if known.
     """
+    db_path = "knowledge_base/claims_history.db"
+
     try:
-        history_df = pd.read_csv("knowledge_base/claims_history.csv")
-        driver_claims = history_df[
-            (history_df['driver_name'] == at_fault_driver_name) &
-            (history_df['claim_type'] == collision_type) &
-            (history_df['fault_status'] == 'At Fault')
-        ]
-        num_prior_claims = len(driver_claims)
-        if num_prior_claims > 0:
-            return f"Finding: Found {num_prior_claims} prior at-fault claim(s) of type '{collision_type}' for driver '{at_fault_driver_name}'."
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        # Base Query
+        query = """
+            SELECT count(*), group_concat(claim_date)
+            FROM claims
+            WHERE driver_name = ?
+            AND claim_type = ?
+            AND fault_status = 'At Fault'
+        """
+        params = [at_fault_driver_name, collision_type]
+
+        # Dynamic SQL: Add VIN filter if provided
+        if vehicle_vin:
+            query += " AND vehicle_vin LIKE ?"
+            params.append(f"%{vehicle_vin}") # Matches '...456' even if partial
+
+        cursor.execute(query, tuple(params))
+        result = cursor.fetchone()
+        conn.close()
+
+        count = result[0]
+        dates = result[1]
+
+        if count > 0:
+            msg = f"Finding: Found {count} prior at-fault claim(s) of type '{collision_type}' for driver '{at_fault_driver_name}'"
+            if vehicle_vin:
+                msg += f" in vehicle (VIN: {vehicle_vin})"
+            return msg + f" on dates: {dates}."
         else:
             return f"Finding: No prior at-fault claims of type '{collision_type}' found for driver '{at_fault_driver_name}'."
-    except FileNotFoundError:
-        return "Error: Claims history file not found."
+
+    except Exception as e:
+        return f"Database Error: {e}"
 
 # --- Agent State Definition (Simplified) ---
 
