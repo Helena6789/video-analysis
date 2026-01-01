@@ -16,3 +16,4 @@ reports/*
 benchmark/golden_files/tests/*.*
 reports/tests/*.*
 summary/*.*
+knowledge_base/policy_vector_store/
