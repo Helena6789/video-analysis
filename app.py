@@ -79,6 +79,14 @@ ANALYZER_CATALOG = {
     "OpenRouter - Gemini 3 Pro (Preview)": (VLMAnalyzer, {"model_name": "google/gemini-3-pro-preview"}),
 }
 
+# --- Judge Models ---
+JUDGE_MODELS = [
+    "nvidia/nemotron-nano-12b-v2-vl:free",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "openai/gpt-5.1"
+]
+
 # --- Helpers ---
 
 def log_message(status, message):
@@ -96,10 +104,10 @@ def get_analyzer(model_name: str) -> AccidentAnalyzer:
         # Check for API key
         if issubclass(analyzer_class, VLMAnalyzer) and not os.getenv("GEMINI_API_KEY"):
             st.error("GEMINI_API_KEY not found. Please create a .env file with your key.")
-            st.stop()
+
         if issubclass(analyzer_class, VLMAnalyzer) and not os.getenv("OPENROUTER_API_KEY"):
             st.error("OPENROUTER_API_KEY not found. Please create a .env file with your key.")
-            st.stop()
+
         return analyzer_class(**kwargs)
     raise ValueError("Invalid analyzer selected")
 
@@ -400,7 +408,7 @@ async def display_ai_assistant_ui(result, model_name):
 
 # --- Main UI Flows ---
 
-async def display_results_ui(results_data, judge_model):
+async def display_results_ui(results_data):
     """Renders the results from a saved report or a new analysis."""
     st.header("Analysis Comparison")
 
@@ -463,10 +471,7 @@ async def run_new_analysis_ui():
     with col1:
         selected_models = st.multiselect("Select Model(s) for Comparison", options=list(ANALYZER_CATALOG.keys()), default=[])
     with col2:
-        judge_model = st.selectbox("Select Judge Model (for accuracy)", options=["nvidia/nemotron-nano-12b-v2-vl:free", "gemini-2.5-flash", "gemini-2.5-flash-lite", "openai/gpt-5.1"], index=0)
-
-    if any(model.startswith("Gemini") for model in selected_models) and not os.getenv("GEMINI_API_KEY"):
-        st.warning("Please provide your Gemini API key in a `.env` file to use Gemini models.")
+        judge_model = st.selectbox("Select Judge Model (for accuracy)", options=JUDGE_MODELS, index=0)
 
     uploaded_file = st.file_uploader("Upload a dashcam or CCTV video", type=["mp4", "mov", "avi"])
 
@@ -590,9 +595,7 @@ async def main():
                 mime="application/pdf",
                 use_container_width=True
             )
-        # When displaying a result, the judge model is read from the saved config
-        judge_model = st.session_state.results.get("config", {}).get("judge_model", "nvidia/nemotron-nano-12b-v2-vl:free")
-        await display_results_ui(st.session_state.results, judge_model)
+        await display_results_ui(st.session_state.results)
     else:
         await run_new_analysis_ui()
 
