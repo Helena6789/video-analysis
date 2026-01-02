@@ -16,3 +16,4 @@ WeasyPrint==67.0
 langchain-openai==1.1.6
 opencv-python==4.12.0.88
 pandas==2.3.3
+markdown=3.10

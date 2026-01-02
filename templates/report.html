@@ -347,7 +347,7 @@
                 {% if model_data.agent_results %}
                 <h3>AI Claims Assistant</h3>
                 <div class="agent-box">
-                    {{model_data.agent_results }}
+                    {{model_data.agent_results | markdown | safe}}
                 </div>
                 {% endif %}
 

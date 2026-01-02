@@ -16,3 +16,4 @@ WeasyPrint
 langchain-openai
 opencv-python
 pandas
+markdown
