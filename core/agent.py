@@ -135,7 +135,7 @@ class AgentState(TypedDict):
     messages: Annotated[List[BaseMessage], lambda x, y: x + y]
 
 # --- LLM and Tool Definitions ---
-tools = [policy_lookup_tool_rag, claims_history_tool]
+tools = [policy_lookup_tool, claims_history_tool]
 tool_map = {tool.name : tool for tool in tools}
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.environ["GEMINI_API_KEY"], temperature=0)
 llm_with_tools = llm.bind_tools(tools)
